@@ -9,15 +9,16 @@ Integrantes:
 - Esteban del Valle 18221
 '''
 
-
 import random
-
 
 class game():
 
 	countPlayers = 0
 	deck = []
 	ocean = []
+	turn = 1
+	hands = []
+	points = []
 
 	def __init__(self,countPlayers):
 		self.countPlayers = countPlayers
@@ -52,26 +53,64 @@ class game():
 			for i in range(handRange):
 				hand.append(self.getCard())
 			playerCards.append(hand)
+		self.hands = playerCards
 		return playerCards
 
+	# llamar despues de repartir las cartas
 	def createOcean(self):
 		for i in range(len(self.deck)):
 			self.ocean.append(self.getCard())
 
-	def turns(self):
+	# llamar despues de la jugada
+	def updateTurn(self):
+		if (self.turn >= self.countPlayers):
+			self.turn = 1
+		else:
+			self.turn += 1
+
+	#Selecting a card from the ocean
+	def fishing(self,pos):
+		correct = True
+		while correct:
+			if pos < len(self.ocean) and pos>0:
+				card=self.ocean.pop(pos)
+				correct = False
+				self.hands[self.turn-1].append(card)
+			else:
+				correct = True
+				print('Incorrect position, try again!')
+				pos = input('Enter position: ')
+
+	def askCard(self,a,b,card):
+		handB = self.hands[b-1]
+		if (card in handB):
+			handB.remove(card)
+			self.hands[a-1].append(card)
+		else:
+			return None
+
+	# Llamar despues de cada askCard
+	def checkFOK():
 		pass
 
-	def fishing(self,xPos,yPos):
-		#Selecting a card from the ocean
-		pass
+	#Llamar cada turn
+	def checkWin(self):
+		if (len(self.ocean)==0 ):
+			pass
+		else:
+			pass
 
 
-
-g = game(4)
+g = game(2)
 print(g.getPlayerCards())
 print(g.deck)
 g.createOcean()
+print('OCEAAAAAAAAAAAAAAAAANNNNNNNN')
 print(g.ocean)
+print ('Fishing')
+g.fishing(1)
+print(g.ocean)
+print(g.hands)
 
 
 
