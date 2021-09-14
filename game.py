@@ -17,6 +17,7 @@ class game():
 
 	countPlayers = 0
 	deck = []
+	ocean = []
 
 	def __init__(self,countPlayers):
 		self.countPlayers = countPlayers
@@ -54,11 +55,23 @@ class game():
 		return playerCards
 
 	def createOcean(self):
+		for i in range(len(self.deck)):
+			self.ocean.append(self.getCard())
+
+	def turns(self):
 		pass
 
-g = game(2)
+	def fishing(self,xPos,yPos):
+		#Selecting a card from the ocean
+		pass
+
+
+
+g = game(4)
 print(g.getPlayerCards())
 print(g.deck)
+g.createOcean()
+print(g.ocean)
 
 
 
