@@ -90,14 +90,38 @@ class game():
 			return None
 
 	# Llamar despues de cada askCard
-	def checkFOK():
-		pass
-
+	def checkFOK(self):
+		player = self.turn
+		hand = self.hands[player]
+		groups = []
+		fok = []
+		for i in hand:
+			groups.append(i[0])
+		my_dict = {i:groups.count(i) for i in groups}
+		for key in my_dict.keys():
+			if my_dict.get(key) == 4:
+				fok = key
+				print('Player '+str(player)+'has obtained a group')
+				self.points[player] += 1
+				for k in hand:
+					if k[0] == fok:
+						hand.remove(k)
 	#Llamar cada turn
 	def checkWin(self):
 		if (len(self.ocean)==0 ):
-			pass
+			counter = 0
+			#Verificando si las manos de los jugadores se encuentran vacias
+			for hand in self.hands:
+				if len(hand) == 0:
+					counter += 1
+			if (counter == countPlayers):
+				#verificar los puntos de los usuarios
+				pass
+			else:
+				#continuar con el juego
+				pass
 		else:
+			#continuar con el juego
 			pass
 
 
@@ -111,7 +135,7 @@ print ('Fishing')
 g.fishing(1)
 print(g.ocean)
 print(g.hands)
-
+g.checkFOK()
 
 
 
