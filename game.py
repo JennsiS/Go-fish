@@ -11,7 +11,7 @@ Integrantes:
 
 import random
 
-class game():
+class Game():
 
 	countPlayers = 0
 	deck = []
@@ -23,7 +23,6 @@ class game():
 	def __init__(self,countPlayers):
 		self.countPlayers = countPlayers
 		self.createDeck()
-
 
 	def createDeck(self):
 		# Last digit indicates the suit of the card (DHSC)
@@ -56,23 +55,24 @@ class game():
 		self.hands = playerCards
 		return playerCards
 
-	# llamar despues de repartir las cartas
+	# Llamar despues de repartir las cartas
 	def createOcean(self):
 		for i in range(len(self.deck)):
 			self.ocean.append(self.getCard())
 
-	# llamar despues de la jugada
+	# Llamar despues de la jugada
 	def updateTurn(self):
 		if (self.turn >= self.countPlayers):
 			self.turn = 1
 		else:
 			self.turn += 1
 
-	#Selecting a card from the ocean
+	# Selecting a card from the ocean
 	def fishing(self,pos):
+		pos -= 1 # corretion cuz user uses 1 to n
 		correct = True
 		while correct:
-			if pos < len(self.ocean) and pos>0:
+			if pos < len(self.ocean) and pos>=0:
 				card=self.ocean.pop(pos)
 				correct = False
 				self.hands[self.turn-1].append(card)
@@ -86,13 +86,14 @@ class game():
 		if (card in handB):
 			handB.remove(card)
 			self.hands[a-1].append(card)
+			return True
 		else:
-			return None
+			return False
 
 	# Llamar despues de cada askCard
 	def checkFOK(self):
 		player = self.turn
-		hand = self.hands[player]
+		hand = self.hands[player-1]
 		groups = []
 		fok = []
 		for i in hand:
@@ -106,16 +107,17 @@ class game():
 				for k in hand:
 					if k[0] == fok:
 						hand.remove(k)
-	#Llamar cada turn
+
+	# Llamar cada turn
 	def checkWin(self):
-		if (len(self.ocean)==0 ):
+		if (len(self.ocean)==0):
 			counter = 0
-			#Verificando si las manos de los jugadores se encuentran vacias
+			# Verificando si las manos de los jugadores se encuentran vacias
 			for hand in self.hands:
 				if len(hand) == 0:
 					counter += 1
 			if (counter == countPlayers):
-				#verificar los puntos de los usuarios
+				# Verificar los puntos de los usuarios
 				maxPoints = max(self.points)
 				winners = []
 				for k in range(len(self.points)):
@@ -125,27 +127,60 @@ class game():
 					print("It's a tie", winners)
 				else:
 					print("Winner", winners)
+				return True
 			else:
 				#continuar con el juego
-				pass
+				return False
 		else:
 			#continuar con el juego
-			pass
+			return False
 
+# Testing
 
-g = game(2)
+g = Game(3)
+
+print('\n\nHands:')
 print(g.getPlayerCards())
+
+print('\n\nDeck:')
 print(g.deck)
+
 g.createOcean()
-print('OCEAN')
+print('\n\nOcean:')
 print(g.ocean)
-print ('Fishing')
-g.fishing(1)
-print(g.ocean)
-print(g.hands)
-g.checkFOK()
-g.checkWin()
+
+iters = 10
+
+for i in range(iters):
+	print("-"*50)
+
+	# Testing fishing
+	#print ('\nFishing... Turn:',g.turn)
+	#g.fishing(1)
+	#g.updateTurn()
+
+	# Testing ask card
+	print ('\nAsking... Turn:',g.turn)
+	pre_turn = g.turn
+	g.updateTurn()
+	print(pre_turn,"asking",g.turn,"for",g.hands[1][0])
+	if g.askCard(pre_turn,g.turn,g.hands[1][0]) == False:
+		print("Go fish!")
+		g.turn = pre_turn
+		g.fishing(1)
+		g.updateTurn()
+	else:
+		print("Card given!")
+
+	print('\nOcean:')
+	print(g.ocean)
+
+	print('\nHands:')
+	print(g.hands)
+
+	g.checkFOK()
+	print(g.checkWin())
 
 
-
+# TODO Test a Win situation
 
