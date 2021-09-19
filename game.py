@@ -116,7 +116,15 @@ class game():
 					counter += 1
 			if (counter == countPlayers):
 				#verificar los puntos de los usuarios
-				pass
+				maxPoints = max(self.points)
+				winners = []
+				for k in range(len(self.points)):
+					if (self.points[k] == maxPoints):
+						winners.append(k+1)
+				if (len(winners)>1):
+					print("It's a tie", winners)
+				else:
+					print("Winner", winners)
 			else:
 				#continuar con el juego
 				pass
@@ -129,13 +137,14 @@ g = game(2)
 print(g.getPlayerCards())
 print(g.deck)
 g.createOcean()
-print('OCEAAAAAAAAAAAAAAAAANNNNNNNN')
+print('OCEAN')
 print(g.ocean)
 print ('Fishing')
 g.fishing(1)
 print(g.ocean)
 print(g.hands)
 g.checkFOK()
+g.checkWin()
 
 
 
