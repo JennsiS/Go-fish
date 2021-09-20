@@ -49,6 +49,7 @@ class Game():
 
 		for i in range(self.countPlayers):
 			hand = []
+			self.points.append(0)
 			for i in range(handRange):
 				hand.append(self.getCard())
 			playerCards.append(hand)
@@ -67,6 +68,10 @@ class Game():
 		else:
 			self.turn += 1
 
+		# skip if hand empty
+		if len(self.hands[self.turn-1]) == 0:
+			self.turn += 1
+
 	# Selecting a card from the ocean
 	def fishing(self,pos):
 		pos -= 1 # corretion cuz user uses 1 to n
@@ -81,14 +86,37 @@ class Game():
 				print('Incorrect position, try again!')
 				pos = input('Enter position: ')
 
-	def askCard(self,a,b,card):
-		handB = self.hands[b-1]
-		if (card in handB):
-			handB.remove(card)
-			self.hands[a-1].append(card)
-			return True
-		else:
+	def askCard(self,a,b,value):
+
+		if len(self.hands[b-1]) == 0:
 			return False
+
+		handB = self.hands[b-1]
+
+		toGive = []
+		for card in handB:
+			if value == card[0:-1]:
+				toGive.append(card)
+				self.hands[b-1].remove(card)
+
+		if len(toGive) == 0:
+			return False
+		else:
+			self.hands[a-1] += toGive
+			return True
+
+	# Llamar cada jugada antes de update turn
+	def checkEmptyHands(self):
+		for hand in self.hands:
+			if len(hand) == 0 and len(self.ocean) != 0:
+				# If ocean has 5 or more draws 5, else draws left over cards
+				if len(self.ocean) >= 5:
+					toDraw = 5
+				else:
+					toDraw = len(self.ocean)
+
+				for i in range(toDraw):
+					hand.append(self.ocean.pop(1))
 
 	# Llamar despues de cada askCard
 	def checkFOK(self):
@@ -97,16 +125,23 @@ class Game():
 		groups = []
 		fok = []
 		for i in hand:
-			groups.append(i[0])
+			groups.append(i[0:-1])
 		my_dict = {i:groups.count(i) for i in groups}
+		toKeep = []
+
 		for key in my_dict.keys():
-			if my_dict.get(key) == 4:
+			if my_dict[key] == 4:
 				fok = key
-				print('Player '+str(player)+'has obtained a group')
-				self.points[player] += 1
-				for k in hand:
-					if k[0] == fok:
-						hand.remove(k)
+				
+				print('Player',player,'has obtained a group!')
+				self.points[player-1] += 1
+
+				toKeep = []
+				for card in hand:
+					if card[0:-1] != fok:
+						toKeep.append(card)
+
+		self.hands[player-1] = toKeep
 
 	# Llamar cada turn
 	def checkWin(self):
@@ -116,7 +151,7 @@ class Game():
 			for hand in self.hands:
 				if len(hand) == 0:
 					counter += 1
-			if (counter == countPlayers):
+			if (counter == self.countPlayers):
 				# Verificar los puntos de los usuarios
 				maxPoints = max(self.points)
 				winners = []
@@ -137,13 +172,13 @@ class Game():
 
 # Testing
 
-g = Game(3)
+g = Game(4)
 
 print('\n\nHands:')
 print(g.getPlayerCards())
 
-print('\n\nDeck:')
-print(g.deck)
+#print('\n\nDeck:')
+#print(g.deck)
 
 g.createOcean()
 print('\n\nOcean:')
@@ -154,23 +189,21 @@ iters = 10
 for i in range(iters):
 	print("-"*50)
 
-	# Testing fishing
-	#print ('\nFishing... Turn:',g.turn)
-	#g.fishing(1)
-	#g.updateTurn()
-
 	# Testing ask card
 	print ('\nAsking... Turn:',g.turn)
 	pre_turn = g.turn
 	g.updateTurn()
-	print(pre_turn,"asking",g.turn,"for",g.hands[1][0])
-	if g.askCard(pre_turn,g.turn,g.hands[1][0]) == False:
+	print(pre_turn,"asking",g.turn,"for",g.hands[1][0][0:-1])
+	if g.askCard(pre_turn,g.turn,g.hands[1][0][0:-1]) == False:
 		print("Go fish!")
 		g.turn = pre_turn
 		g.fishing(1)
+		g.checkEmptyHands()
 		g.updateTurn()
 	else:
 		print("Card given!")
+		g.turn = pre_turn
+		g.checkEmptyHands()
 
 	print('\nOcean:')
 	print(g.ocean)
@@ -178,8 +211,12 @@ for i in range(iters):
 	print('\nHands:')
 	print(g.hands)
 
+	g.hands = [["6H","6D","6C","6S"],[],[],[]]
+	g.ocean = []
+
 	g.checkFOK()
-	print(g.checkWin())
+	if g.checkWin():
+		break
 
 
 # TODO Test a Win situation
