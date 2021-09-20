@@ -9,139 +9,175 @@ Integrantes:
 - Esteban del Valle 18221
 '''
 
-import argparse
-import sys
+import json
+import threading
 import socket
-import errno
-import pickle
-import random
-import zlib
+import argparse
 
 
-def signIn(username):
-	dprotocol = {
-		'type': 'signin',
-		'username': username
-	}
-	msg = pickle.dumps(dprotocol)
-	msg = bytes(f"{len(msg):<{headerLen}}", "utf-8") + msg
-	return msg
+class Client:
 
-def correctSignIn():
-	dprotocol = {
-		"type":"signinok",
-	}
-	msg = pickle.dumps(dprotocol)
-	msg = bytes(f"{len(msg):<{headerLen}}", "utf-8") + msg
-	return msg
+	def __init__(self,server_host,server_port_tcp=1234,server_port_udp=1234,client_port_udp=1235):
+		self.identifier = None
+		self.server_message = []
+		self.room_id = None
+		self.client_udp = ("0.0.0.0", client_port_udp)
+		self.lock = threading.Lock()
+		self.server_listener = SocketThread(self.client_udp,self,self.lock)
+		self.server_listener.start()
+		self.server_udp = (server_host, server_port_udp)
+		self.server_tcp = (server_host, server_port_tcp)
+		self.register()
 
-def sendMessage(message):
-	crc32 = zlib.crc32(pickle.dumps(message))
+	def create_room(self, room_name=None):
+		message = json.dumps({"action": "create", "payload": room_name, "identifier": self.identifier})
+		self.sock_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.sock_tcp.connect(self.server_tcp)
+		self.sock_tcp.send(message.encode())
+		data = self.sock_tcp.recv(1024)
+		self.sock_tcp.close()
+		message = self.parse_data(data)
+		self.room_id = message
 
-	dprotocol = {
-		"type":"sendmessage",
-		"message": message
-	}
-	msg = pickle.dumps(dprotocol)
-	msg = bytes(f"{len(msg):<{headerLen}}", "utf-8") + msg
-	return msg
+	def join_room(self, room_id):
+		self.room_id = room_id
+		message = json.dumps({"action": "join", "payload": room_id, "identifier": self.identifier})
+		self.sock_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.sock_tcp.connect(self.server_tcp)
+		self.sock_tcp.send(message.encode())
+		data = self.sock_tcp.recv(1024)
+		self.sock_tcp.close()
+		message = self.parse_data(data)
+		self.room_id = message
 
-def receiveMessage(clientSocket,header=''):
-	try:
-		if header == '': 
-			messageHeader = clientSocket.recv(headerLen)
-		else:
-			messageHeader = header
-		if not len(messageHeader):
-			return False
-		
-		messageLength  = int(messageHeader.decode('utf-8').strip())
-		data = pickle.loads(clientSocket.recv(messageLength))
-		msg = {"header": messageHeader, "data": data}
-		return msg
-	except:
-		return False
+	def autojoin(self):
+		message = json.dumps({"action": "autojoin", "identifier": self.identifier})
+		self.sock_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.sock_tcp.connect(self.server_tcp)
+		self.sock_tcp.send(message.encode())
+		data = self.sock_tcp.recv(1024)
+		self.sock_tcp.close()
+		message = self.parse_data(data)
+		self.room_id = message
+
+	def leave_room(self):
+		message = json.dumps({"action": "leave","room_id": self.room_id,"identifier": self.identifier})
+		self.sock_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.sock_tcp.connect(self.server_tcp)
+		self.sock_tcp.send(message.encode())
+		data = self.sock_tcp.recv(1024)
+		self.sock_tcp.close()
+		message = self.parse_data(data)
+
+	def get_rooms(self):
+		message = json.dumps({"action": "get_rooms", "identifier": self.identifier})
+		self.sock_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.sock_tcp.connect(self.server_tcp)
+		self.sock_tcp.send(message.encode())
+		data = self.sock_tcp.recv(1024)
+		self.sock_tcp.close()
+		message = self.parse_data(data)
+		return message
+
+	def send(self, message):
+		message = json.dumps({
+			"action": "send",
+			"payload": {"message": message},
+			"room_id": self.room_id,
+			"identifier": self.identifier
+		})
+		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		sock.sendto(message.encode(), self.server_udp)
+
+	def sendto(self, recipients, message):
+		message = json.dumps({"action": "sendto","payload": {"recipients": recipients,"message": message},"room_id": self.room_id,"identifier": self.identifier})
+		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		sock.sendto(message.encode(), self.server_udp)
+
+	def register(self):
+		message = json.dumps({"action": "register","payload": self.client_udp[1]})
+		self.sock_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.sock_tcp.connect(self.server_tcp)
+		self.sock_tcp.send(message.encode())
+		data = self.sock_tcp.recv(1024)
+		self.sock_tcp.close()
+		message = self.parse_data(data)
+		self.identifier = message
+
+	def parse_data(self, data):
+		try:
+			data = json.loads(data)
+			if data['success'] == "True":
+				return data['message']
+			else:
+				raise Exception(data['message'])
+		except ValueError:
+			print(data)
+
+	def get_messages(self):
+		message = self.server_message
+		self.server_message = []
+		return set(message)
 
 
-# Args
-parser = argparse.ArgumentParser()
-parser.add_argument('-p','--port',help='Server port to connect.')
-args = parser.parse_args()
+class SocketThread(threading.Thread):
+	def __init__(self, addr, client, lock):
+		threading.Thread.__init__(self)
+		self.client = client
+		self.lock = lock
+		self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		self.sock.bind(addr)
 
-# Constantes
-headerLen = 10 
-ip = "127.0.0.1"
-
-try:
-	port = int(args.port)
-except:
-	print("\n<!> Bad port, run 'python client.py -h' por more info.\n")
-	sys.exit()
-
-clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-clientSocket.connect((ip,port))
-clientSocket.setblocking(False)
-print("\n\n>> Connected to server IP["+str(ip)+"] PORT["+str(port)+"]\n")
-signedIn = False
-
-userN = input(">> Enter username: ")
-msg = signIn(userN)
-clientSocket.send(msg)
-
-while not signedIn:
-	try:
+	def run(self):
 		while True:
-			message = receiveMessage(clientSocket)
-			if message:
-				if message['data']['username'] == userN:
-					print("\n\n>> Server set IP["+str(ip)+"] PORT["+str(port)+"]\n")
-					print(">> Signed in as:",userN)
-					msg = correctSignIn()
-					clientSocket.send(msg)
-					signedIn = True
-					break
-				else:
-					print(">> Mismatch username:",message['data']['username'])
-					print(">> Disconnecting.")
-					sys.exit()
+			data, addr = self.sock.recvfrom(1024)
+			self.lock.acquire()
+			try:
+				self.client.server_message.append(data)
+			finally:
+				self.lock.release()
 
-	except IOError as e:
-		if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
-			print('>> Error:',str(e))
-			sys.exit()
-		continue
-	except Exception as e:
-		print('>> Error:', str(e))
-		sys.exit()
-
-while True:
-
-	print("\n\n\n GAME STATE \n\n\n")
-
-	message = input("["+userN+"]: ")
+	def stop(self):
+		self.sock.close()
 
 
-	if message:
-		msg = sendMessage(message)
-		clientSocket.send(msg)
+if __name__ == "__main__":
+	parser = argparse.ArgumentParser(description='Simple game server')
+	parser.add_argument('--tcpport',dest='tcp_port',help='Listening tcp port',default="1234")
+	parser.add_argument('--udpport',dest='udp_port',help='Listening udp port',default="1234")
+	parser.add_argument('--clientid',dest='client_id',help='Client game id',default="1235")
+
+	args = parser.parse_args()
+
+	client_id = int(args.client_id)
+	client_port = int(args.tcp_port) + client_id
+
+	#  Register on server
+	client = Client("127.0.0.1",int(args.tcp_port),int(args.udp_port),client_port)
 
 	try:
-		while True:
-
-			header = clientSocket.recv(headerLen)
-			if not len(header):
-				print(">> Server closed connection.")
-				sys.exit()
-			msg = receiveMessage(clientSocket,header)
-
-			print("[",msg['data']['username'],"]: ",msg['data']['message'],sep="")
-
-	except IOError as e:
-		if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
-			print('>> Error:',str(e))
-			sys.exit()
-		continue
+		client.autojoin()
 	except Exception as e:
-		print('>> Error:', str(e))
-		sys.exit()
+		print("Error : %s" % str(e))
+
+	username = input(">> Enter your username: ")
+
+	#  Main game loop
+	while True:
+		#  Send message to room (any serializable data)
+
+		msgtext = input(">> Command: ")
+
+		client.send({"name": username,"message": msgtext})
+
+		print(client.get_rooms())
+
+		msg = client.get_messages()
+		if len(msg) != 0:
+			for message in msg:
+				message = json.loads(message)
+				sender, value = message.popitem()
+				print("%s: %s" % (value["name"], value["message"]))
+
+	client.leave_room()
 
