@@ -278,20 +278,23 @@ if __name__ == "__main__":
 					while to_id not in player_id_list:
 						print("<!> Bad input.\n")
 						to_id = input(">> Ask player "+str(player_id_list)+": ")
-
-					card_number = input(">> Card number [A,2,3,4,5,6,7,8,9,10,J,Q,K]: ")
-					# call game.getValidCardNumbers()
-					while card_number not in ['A','2','3','4','5','6','7','8','9','10','J','Q','K']:
+					validValues = game.getValidCardNumbers()
+					card_number = input(">> Card values to choose from "+ str(validValues)+": ")
+					card_number = card_number.upper()
+					while card_number not in validValues:
 						print("<!> Bad input.\n")
-						card_number = input(">> Card number [A,2,3,4,5,6,7,8,9,10,J,Q,K]: ")
-
+						card_number = input(">> Card values to choose from "+ str(validValues)+": ")
+						card_number = card_number.upper()
 					if game.askCard(client_id,int(to_id),card_number) == False:
 						# Player asked does not have any cards to give, go fish!
 						print("\n>> Go fish!")
 						if len(game.ocean) > 0:
 							print(">> Pick an ocean card...")
-							cardPos = input(">> Ocean card position [1 to "+str(len(game.ocean))+"]: ") #TODO: check for valid cardPos
-							game.fishing(int(cardPos))
+							cardPos = int(input(">> Ocean card position [1 to "+str(len(game.ocean))+"]: "))
+							while cardPos not in range(1,len(game.ocean)+1):
+								print("<!> Bad input.\n")
+								cardPos = int(input(">> Ocean card position [1 to "+str(len(game.ocean))+"]: "))
+							game.fishing(cardPos)
 						else:
 							print(">> Ocean empty, no fishing for you!")
 						game.checkEmptyHands()

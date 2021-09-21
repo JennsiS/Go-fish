@@ -213,3 +213,13 @@ class Game():
 	def toJSON(self):
 		return json.dumps({"countPlayers":self.countPlayers,"hands":self.hands,"ocean":self.ocean,"turn":self.turn,"points":self.points})
 
+	# Defining the values that the player can request from another player depending on their hand
+	def getValidCardNumbers(self):
+		myHand = self.hands[self.turn-1]
+		uniqueValues = []
+		for card in myHand:
+			value = card[0:-1]
+			if value not in uniqueValues:
+				uniqueValues.append(value) 
+		return uniqueValues
+
