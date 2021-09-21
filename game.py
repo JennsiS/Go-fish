@@ -23,6 +23,7 @@ class Game():
 	def __init__(self,countPlayers):
 		self.countPlayers = countPlayers
 		self.createDeck()
+		self.ramdomizeFirstTurn()
 
 	def createDeck(self):
 		# Last digit indicates the suit of the card (DHSC)
@@ -34,7 +35,10 @@ class Game():
 		]
 
 	def resetDeck(self):
-		self.createDeck
+		self.createDeck()
+
+	def ramdomizeFirstTurn(self):
+		self.turn = random.randint(1,countPlayers)
 
 	def getCard(self):
 		randomCardIndex = random.randint(0, len(self.deck)-1)
@@ -169,55 +173,3 @@ class Game():
 		else:
 			#continuar con el juego
 			return False
-
-# Testing
-
-g = Game(4)
-
-print('\n\nHands:')
-print(g.getPlayerCards())
-
-#print('\n\nDeck:')
-#print(g.deck)
-
-g.createOcean()
-print('\n\nOcean:')
-print(g.ocean)
-
-iters = 10
-
-for i in range(iters):
-	print("-"*50)
-
-	# Testing ask card
-	print ('\nAsking... Turn:',g.turn)
-	pre_turn = g.turn
-	g.updateTurn()
-	print(pre_turn,"asking",g.turn,"for",g.hands[1][0][0:-1])
-	if g.askCard(pre_turn,g.turn,g.hands[1][0][0:-1]) == False:
-		print("Go fish!")
-		g.turn = pre_turn
-		g.fishing(1)
-		g.checkEmptyHands()
-		g.updateTurn()
-	else:
-		print("Card given!")
-		g.turn = pre_turn
-		g.checkEmptyHands()
-
-	print('\nOcean:')
-	print(g.ocean)
-
-	print('\nHands:')
-	print(g.hands)
-
-	g.hands = [["6H","6D","6C","6S"],[],[],[]]
-	g.ocean = []
-
-	g.checkFOK()
-	if g.checkWin():
-		break
-
-
-# TODO Test a Win situation
-

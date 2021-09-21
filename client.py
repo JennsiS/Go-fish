@@ -13,7 +13,6 @@ import json
 import threading
 import socket
 import argparse
-from game import Game
 import time
 import sys
 
@@ -85,12 +84,12 @@ class Client:
 	def send(self, message):
 		message = json.dumps({"action": "send","payload": {"message": message},"room_id": self.room_id,"identifier": self.identifier})
 		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		sock.sendTo(message.encode(), self.server_udp)
+		sock.sendto(message.encode(), self.server_udp)
 
 	def sendTo(self, recipients, message):
 		message = json.dumps({"action": "sendto","payload": {"recipients": recipients,"message": message},"room_id": self.room_id,"identifier": self.identifier})
 		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		sock.sendTo(message.encode(), self.server_udp)
+		sock.sendto(message.encode(), self.server_udp)
 
 	def register(self):
 		message = json.dumps({"action": "register","payload": self.client_udp[1]})
@@ -153,6 +152,7 @@ if __name__ == "__main__":
 
 	#  Register on server
 	client = Client("127.0.0.1",int(args.tcp_port),int(args.udp_port),client_port)
+	username = input(">> Enter your username: ")
 
 	try:
 		# Join client to available room
@@ -160,22 +160,39 @@ if __name__ == "__main__":
 	except Exception as e:
 		print("<!> Could not autojoin,",e)
 
-	username = input(">> Enter your username: ")
-
 	# Wait for room to fill
 	rooms = client.getRooms()
-	connectedPlayers = rooms[0]["nb_players"]
-	maxPlayers = rooms[0]["capacity"]
+	room = rooms[0]
+	connectedPlayers,maxPlayers = room["nb_players"],room["capacity"]
 
 	while connectedPlayers < maxPlayers:
 		print("\n>> Waiting for other players to start game... (",connectedPlayers,"/",maxPlayers,")\n",sep="")
 		time.sleep(3)
 		rooms = client.getRooms()
-		connectedPlayers = rooms[0]["nb_players"]
-		maxPlayers = rooms[0]["capacity"]
+		room = rooms[0]
+		connectedPlayers,maxPlayers = room["nb_players"],room["capacity"]
 
-	# Init game
+	'''
+	Init Room Game
+	- When room is full it starts the game
+	
+	Room flow:
+	1. Create game: game = Game(connectedPlayers)
+	2. Create ocean: game.createOcean()
+	3. Get init turn: game.turn
+	4. Turn player asks another player for a type of card: game.askCard(client_id,to_id,card_number)
+	5. if False (Fish)
+		- cardPos = input(">> Ocean card position: ")
+		- game.fishing(cardPos)
+		- game.checkEmptyHands()
+		- game.updateTurn()
+	6. if True (Card given)
+		- game.checkEmptyHands()
+	7. game.checkFOK()
+	8. game.checkWin()
+	'''
 
+	print(room)
 
 	#  Main GAME loop
 	continueLoop = True
