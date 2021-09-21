@@ -10,6 +10,7 @@ Integrantes:
 '''
 
 import random
+import json
 
 class Game():
 
@@ -24,6 +25,8 @@ class Game():
 		self.countPlayers = countPlayers
 		self.createDeck()
 		self.ramdomizeFirstTurn()
+		self.getPlayerCards()
+		self.createOcean()
 
 	def createDeck(self):
 		# Last digit indicates the suit of the card (DHSC)
@@ -38,7 +41,7 @@ class Game():
 		self.createDeck()
 
 	def ramdomizeFirstTurn(self):
-		self.turn = random.randint(1,countPlayers)
+		self.turn = random.randint(1,self.countPlayers)
 
 	def getCard(self):
 		randomCardIndex = random.randint(0, len(self.deck)-1)
@@ -62,8 +65,11 @@ class Game():
 
 	# Llamar despues de repartir las cartas
 	def createOcean(self):
+		ocean = []
 		for i in range(len(self.deck)):
-			self.ocean.append(self.getCard())
+			ocean.append(self.getCard())
+		self.ocean = ocean
+		return ocean
 
 	# Llamar despues de la jugada
 	def updateTurn(self):
@@ -79,16 +85,12 @@ class Game():
 	# Selecting a card from the ocean
 	def fishing(self,pos):
 		pos -= 1 # corretion cuz user uses 1 to n
-		correct = True
-		while correct:
-			if pos < len(self.ocean) and pos>=0:
-				card=self.ocean.pop(pos)
-				correct = False
-				self.hands[self.turn-1].append(card)
-			else:
-				correct = True
-				print('Incorrect position, try again!')
-				pos = input('Enter position: ')
+		if pos < len(self.ocean) and pos >=0:
+			card = self.ocean.pop(pos)
+			self.hands[self.turn-1].append(card)
+			return True
+		else:
+			return False
 
 	def askCard(self,a,b,value):
 
@@ -121,6 +123,9 @@ class Game():
 
 				for i in range(toDraw):
 					hand.append(self.ocean.pop(1))
+
+	def getHand(self):
+		return self.hands[self.turn-1]
 
 	# Llamar despues de cada askCard
 	def checkFOK(self):
@@ -173,3 +178,14 @@ class Game():
 		else:
 			#continuar con el juego
 			return False
+
+	def adoptGameState(self,countPlayers,hands,ocean,turn):
+		self.countPlayers = countPlayers
+		self.hands = hands
+		self.ocean = ocean
+		self.turn = turn
+
+	# Make Game JSON Serializable
+	def toJSON(self):
+		return json.dumps({"countPlayers":self.countPlayers,"hands":self.hands,"ocean":self.ocean,"turn":self.turn})
+

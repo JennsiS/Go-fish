@@ -15,6 +15,7 @@ import socket
 import argparse
 import time
 import sys
+from game import Game
 
 
 class Client:
@@ -52,6 +53,35 @@ class Client:
 		message = self.parseData(data)
 		self.room_id = message
 
+	def getGame(self):
+		message = json.dumps({"action": "get_game", "payload": self.room_id, "identifier": self.identifier})
+		self.sock_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.sock_tcp.connect(self.server_tcp)
+		self.sock_tcp.send(message.encode())
+		data = self.sock_tcp.recv(1024)
+		self.sock_tcp.close()
+		gameData = self.parseData(data)
+		return gameData
+
+	def setGame(self, game):
+		message = json.dumps({"action": "set_game", "payload": self.room_id, "identifier": self.identifier, "game": game.toJSON()})
+		self.sock_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.sock_tcp.connect(self.server_tcp)
+		self.sock_tcp.send(message.encode())
+		data = self.sock_tcp.recv(1024)
+		self.sock_tcp.close()
+		message = self.parseData(data)
+
+	def isRoomReady(self):
+		message = json.dumps({"action": "room_ready", "payload": self.room_id, "identifier": self.identifier})
+		self.sock_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.sock_tcp.connect(self.server_tcp)
+		self.sock_tcp.send(message.encode())
+		data = self.sock_tcp.recv(1024)
+		self.sock_tcp.close()
+		is_ready = self.parseData(data)
+		return is_ready
+
 	def autojoin(self):
 		message = json.dumps({"action": "autojoin", "identifier": self.identifier})
 		self.sock_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -80,6 +110,12 @@ class Client:
 		self.sock_tcp.close()
 		message = self.parseData(data)
 		return message
+
+	def getRoom(self):
+		rooms = self.getRooms()
+		for room in rooms:
+			if room['id'] == self.room_id:
+				return room
 
 	def send(self, message):
 		message = json.dumps({"action": "send","payload": {"message": message},"room_id": self.room_id,"identifier": self.identifier})
@@ -115,6 +151,9 @@ class Client:
 		message = self.server_message
 		self.server_message = []
 		return set(message)
+
+	def disconnect(self):
+		self.server_listener.stop()
 
 
 class SocketThread(threading.Thread):
@@ -161,16 +200,26 @@ if __name__ == "__main__":
 		print("<!> Could not autojoin,",e)
 
 	# Wait for room to fill
-	rooms = client.getRooms()
-	room = rooms[0]
-	connectedPlayers,maxPlayers = room["nb_players"],room["capacity"]
+	room = client.getRoom()
+	connectedPlayers,maxPlayers = room["connected_players"],room["capacity"]
 
 	while connectedPlayers < maxPlayers:
 		print("\n>> Waiting for other players to start game... (",connectedPlayers,"/",maxPlayers,")\n",sep="")
 		time.sleep(3)
-		rooms = client.getRooms()
-		room = rooms[0]
-		connectedPlayers,maxPlayers = room["nb_players"],room["capacity"]
+		room = client.getRoom()
+		connectedPlayers,maxPlayers = room["connected_players"],room["capacity"]
+
+	print("\n>> Waiting for other players to start game... (",connectedPlayers,"/",maxPlayers,")\n",sep="")
+
+	# Defensive prog player list
+	player_id_list = []
+	for i in range(connectedPlayers):
+		player_id_list.append(str(i+1))
+
+	player_id_list.remove(str(client_id))
+
+	# Init game
+	game = Game(connectedPlayers)
 
 	'''
 	Init Room Game
@@ -178,7 +227,6 @@ if __name__ == "__main__":
 	
 	Room flow:
 	1. Create game: game = Game(connectedPlayers)
-	2. Create ocean: game.createOcean()
 	3. Get init turn: game.turn
 	4. Turn player asks another player for a type of card: game.askCard(client_id,to_id,card_number)
 	5. if False (Fish)
@@ -192,9 +240,8 @@ if __name__ == "__main__":
 	8. game.checkWin()
 	'''
 
-	print(room)
-
 	#  Main GAME loop
+	print("\n>> Game starting!!!\n\n")
 	continueLoop = True
 
 	while continueLoop:
@@ -205,22 +252,63 @@ if __name__ == "__main__":
 				sender, value = message.popitem()
 				print("[",value["name"],"]: ",value["message"],sep="")
 
-		cmd = input("[chat/play/exit]: ")
+		gameData = client.getGame()
+		gameData = json.loads(gameData)
+		game.adoptGameState(gameData['countPlayers'],gameData['hands'],gameData['ocean'],gameData['turn'])
 
-		while cmd not in ["chat","play","exit"]:
-			cmd = input("[chat/play/exit]: ")
+		if game.checkWin() == False:
+			if game.turn == client_id:
+				cmd = input("[chat/play/exit]: ")
 
-		if cmd == "chat":
-			msgtext = input("[chat msg]: ")
-			client.send({"name": username,"message": msgtext})
+				while cmd not in ["chat","play","exit"]:
+					cmd = input("[chat/play/exit]: ")
 
-		elif cmd == "play":
-			# get game state and ask card or fish
-			pass
-			
+				if cmd == "chat":
+					msgtext = input(">> Chat msg: ")
+					client.send({"name": username,"message": msgtext})
 
-		elif cmd == "exit":
+				elif cmd == "play":
+					hand = game.getHand()
+					print(">> Your current hand:\n\t",hand,"\n")
+
+
+					to_id = input(">> Ask player "+str(player_id_list)+": ")
+					while to_id not in player_id_list:
+						print("<!> Bad input.\n")
+						to_id = input(">> Ask player "+str(player_id_list)+": ")
+
+					card_number = input(">> Card number [A,2,3,4,5,6,7,8,9,10,J,Q,K]: ")
+					while card_number not in ['A','2','3','4','5','6','7','8','9','10','J','Q','K']:
+						print("<!> Bad input.\n")
+						card_number = input(">> Card number [A,2,3,4,5,6,7,8,9,10,J,Q,K]: ")
+
+					if game.askCard(client_id,int(to_id),card_number) == False:
+						# Player asked does not have any cards to give, go fish!
+						print("\n>> Go fish! Pick an ocean card...")
+						cardPos = input(">> Ocean card position [1 to "+str(len(game.ocean))+"]: ") #TODO: check for valid cardPos
+						game.fishing(int(cardPos))
+						game.checkEmptyHands()
+						game.updateTurn()
+					else:
+						# Player asked gave cards, turn does not change
+						game.checkEmptyHands()
+
+					game.checkFOK()
+
+					client.setGame(game)
+
+				
+				elif cmd == "exit":
+					client.leaveRoom()
+					print(">> Left room... disconnecting.")
+					client.disconnect()
+					sys.exit()
+			else:
+				#foo = input("\t\t- PRESS ENTER to refresh -\n")
+				time.sleep(2)
+		else:
+			print("\n>> Thanks for playing!\n")
 			client.leaveRoom()
-			print(">> Left room... disconnecting.")
+			client.disconnect()
 			sys.exit()
 

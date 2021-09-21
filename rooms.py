@@ -10,11 +10,13 @@ Integrantes:
 '''
 import uuid
 from player import Player
+from game import Game
 
 class Room:
 	def __init__(self, identifier, capacity, room_name):
 		self.capacity = capacity
 		self.players = []
+		self.game = Game(self.capacity)
 		self.identifier = identifier
 		if room_name is not None:
 			self.name = room_name
@@ -57,6 +59,31 @@ class Room:
 				inRoom = True
 				break
 		return inRoom
+
+	# Get Game
+	def get_game(self):
+		gameData = self.game.toJSON()
+		return gameData
+
+	# Set Game
+	def set_game(self, data):
+		try:
+			data = json.loads(data)
+			print(data) # TODO FIx SET GAME
+			if data['success'] == "True":
+				gameData = data['message']
+				self.game.adoptGameState(gameData['countPlayers'],gameData['hands'],gameData['ocean'],gameData['turn'])
+			else:
+				raise Exception(data['message'])
+		except ValueError:
+			print(data)
+
+	# Check if game is ready to start
+	def is_ready(self):
+		if self.is_full and len(self.game.ocean) != 0:
+			return True
+		else:
+			return False
 
 class Rooms:
 	def __init__(self, capacity=2):
@@ -104,6 +131,21 @@ class Rooms:
 				raise RoomFull()
 		else:
 			pass
+
+	# Get Game
+	def get_game(self, roomId):
+		if roomId in self.rooms:
+			return self.rooms[roomId].get_game()
+
+	# Set Game
+	def set_game(self, roomId, gameData):
+		if roomId in self.rooms:
+			self.rooms[roomId].set_game(gameData)
+
+	# Check if room ready to start game
+	def is_ready(self,roomId):
+		if roomId in self.rooms:
+			return self.rooms[roomId].is_ready()
 
 	# Remove a player from a room
 	def leave(self, playerID, roomId):
@@ -159,3 +201,15 @@ class Rooms:
 		for player in room.players:
 			if player.identifier in recipients:
 				player.send_udp(identifier, message)
+
+
+class RoomFull(Exception):
+	pass
+
+
+class RoomNotFound(Exception):
+	pass
+
+
+class NotInRoom(Exception):
+	pass

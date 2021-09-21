@@ -42,13 +42,13 @@ def main_loop(tcp_port, udp_port, rooms):
 		if cmd == "list":
 			print(">> Rooms:\n")
 			for room_id, room in rooms.rooms.items():
-				print(room.identifier," - ",room.name,"  (",len(room.players),"/", room.capacity, ")")
+				print(room.identifier," - ",room.name," (",len(room.players),"/",room.capacity,")",sep="")
 				
 		elif cmd.startswith("room "):
 			try:
 				id = cmd[5:]
 				room = rooms.rooms[id]
-				print(room.identifier," - ",room.name,"  (",len(room.players),"/", room.capacity, ")")
+				print(room.identifier," - ",room.name," (",len(room.players),"/",room.capacity,")",sep="")
 				print(">> Players:\n")
 				for player in room.players:
 					print(player.identifier)
@@ -63,7 +63,7 @@ def main_loop(tcp_port, udp_port, rooms):
 				print("Error while getting user informations")
 				
 		elif cmd == "quit":
-			print("Shutting down  server...")
+			print(">> Shutting down server.")
 			udp_server.is_listening = False
 			tcp_server.is_listening = False
 			is_running = False
@@ -204,11 +204,18 @@ class TcpServer(Thread):
 					payload = data['payload']
 				except KeyError:
 					pass
+
+				game = None
+				
+				try:
+					game = data['game']
+				except KeyError:
+					pass
 				
 				self.lock.acquire()
 				
 				try:
-					self.route(conn,addr,action,payload,identifier,room_id)
+					self.route(conn,addr,action,payload,identifier,room_id,game)
 				finally:
 					self.lock.release()
 					
@@ -224,7 +231,7 @@ class TcpServer(Thread):
 
 		self.stop()
 
-	def route(self,sock,addr,action,payload,identifier=None,room_id=None):
+	def route(self,sock,addr,action,payload,identifier=None,room_id=None,game=None):
 		if action == "register":
 			client = self.rooms.register(addr, int(payload))
 			client.send_tcp(True, client.identifier, sock)
@@ -250,6 +257,33 @@ class TcpServer(Thread):
 					
 				except RoomFull:
 					client.send_tcp(False, room_id, sock)
+
+			elif action == "get_game":
+				try:
+					if payload not in self.rooms.rooms.keys():
+						raise RoomNotFound()
+					gameData = self.rooms.get_game(payload)
+					client.send_tcp(True, gameData, sock)
+				except:
+					print("<!> Error getting game.")
+
+			elif action == "set_game":
+				try:
+					if payload not in self.rooms.rooms.keys():
+						raise RoomNotFound()
+					self.rooms.set_game(payload,game)
+					client.send_tcp(True, payload, sock)
+				except:
+					print("<!> Error setting game.")
+
+			elif action == "room_ready":
+				try:
+					if payload not in self.rooms.rooms.keys():
+						raise RoomNotFound()
+					is_ready = self.rooms.is_ready(payload)
+					client.send_tcp(True, is_ready, sock)
+				except:
+					print("<!> Error in checking if room ready.")
 					
 			elif action == "autojoin":
 				room_id = self.rooms.join(identifier)
@@ -258,7 +292,7 @@ class TcpServer(Thread):
 			elif action == "get_rooms":
 				rooms = []
 				for id_room, room in self.rooms.rooms.items():
-					rooms.append({"id": id_room,"name": room.name,"nb_players": len(room.players),"capacity": room.capacity})
+					rooms.append({"id": id_room,"name": room.name,"connected_players": len(room.players),"capacity": room.capacity})
 					
 				client.send_tcp(True, rooms, sock)
 				
