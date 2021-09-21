@@ -100,10 +100,13 @@ class Game():
 		handB = self.hands[b-1]
 
 		toGive = []
+		toKeep = []
 		for card in handB:
-			if value == card[0:-1]:
+			if value != card[0:-1]:
+				toKeep.append(card)
+			else:
 				toGive.append(card)
-				self.hands[b-1].remove(card)
+		self.hands[b-1] = toKeep
 
 		if len(toGive) == 0:
 			return False
@@ -142,15 +145,15 @@ class Game():
 			if my_dict[key] == 4:
 				fok = key
 				
-				print('Player',player,'has obtained a group!')
+				print('>> Player',player,'has obtained a group!')
 				self.points[player-1] += 1
 
-				toKeep = []
 				for card in hand:
 					if card[0:-1] != fok:
 						toKeep.append(card)
 
-		self.hands[player-1] = toKeep
+		if len(toKeep) > 0:
+			self.hands[player-1] = toKeep
 
 	# Llamar cada turn
 	def checkWin(self):
@@ -168,9 +171,14 @@ class Game():
 					if (self.points[k] == maxPoints):
 						winners.append(k+1)
 				if (len(winners)>1):
-					print("It's a tie", winners)
+					print(">> It's a tie, players: ", winners)
 				else:
-					print("Winner", winners)
+					print(">> Player",winners[0],"has won!!!")
+
+				print(">> Final points:")
+				cont = 1
+				for p in self.points:
+					print("\t-",cont," Points:",p)
 				return True
 			else:
 				#continuar con el juego
@@ -179,13 +187,29 @@ class Game():
 			#continuar con el juego
 			return False
 
-	def adoptGameState(self,countPlayers,hands,ocean,turn):
+	def adoptGameState(self,countPlayers,hands,ocean,turn,points):
 		self.countPlayers = countPlayers
 		self.hands = hands
 		self.ocean = ocean
 		self.turn = turn
+		self.points = points
+
+	def stateToString(self):
+		print("\tPlayers:",self.countPlayers,"\n\tTurn:",self.turn)
+		print("\tHands:")
+		cont = 1
+		for hand in self.hands:
+			print("\t  -",cont,":",hand)
+			cont += 1
+		print("\tOcean:",self.ocean)
+
+		print("\tPoints:")
+		cont = 1
+		for p in self.points:
+			print("\t  -",cont," Points:",p)
+			cont += 1
 
 	# Make Game JSON Serializable
 	def toJSON(self):
-		return json.dumps({"countPlayers":self.countPlayers,"hands":self.hands,"ocean":self.ocean,"turn":self.turn})
+		return json.dumps({"countPlayers":self.countPlayers,"hands":self.hands,"ocean":self.ocean,"turn":self.turn,"points":self.points})
 

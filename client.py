@@ -196,6 +196,8 @@ if __name__ == "__main__":
 	try:
 		# Join client to available room
 		client.autojoin()
+		print(">> Connected to [ room",client.room_id,"]\n\n")
+		print(">> [ roomstate",client.room_id,"]\n\n") # remove final version
 	except Exception as e:
 		print("<!> Could not autojoin,",e)
 
@@ -254,7 +256,7 @@ if __name__ == "__main__":
 
 		gameData = client.getGame()
 		gameData = json.loads(gameData)
-		game.adoptGameState(gameData['countPlayers'],gameData['hands'],gameData['ocean'],gameData['turn'])
+		game.adoptGameState(gameData['countPlayers'],gameData['hands'],gameData['ocean'],gameData['turn'],gameData['points'])
 
 		if game.checkWin() == False:
 			if game.turn == client_id:
@@ -278,27 +280,42 @@ if __name__ == "__main__":
 						to_id = input(">> Ask player "+str(player_id_list)+": ")
 
 					card_number = input(">> Card number [A,2,3,4,5,6,7,8,9,10,J,Q,K]: ")
+					# call game.getValidCardNumbers()
 					while card_number not in ['A','2','3','4','5','6','7','8','9','10','J','Q','K']:
 						print("<!> Bad input.\n")
 						card_number = input(">> Card number [A,2,3,4,5,6,7,8,9,10,J,Q,K]: ")
 
 					if game.askCard(client_id,int(to_id),card_number) == False:
 						# Player asked does not have any cards to give, go fish!
-						print("\n>> Go fish! Pick an ocean card...")
-						cardPos = input(">> Ocean card position [1 to "+str(len(game.ocean))+"]: ") #TODO: check for valid cardPos
-						game.fishing(int(cardPos))
+						print("\n>> Go fish!")
+						if len(game.ocean) > 0:
+							print(">> Pick an ocean card...")
+							cardPos = input(">> Ocean card position [1 to "+str(len(game.ocean))+"]: ") #TODO: check for valid cardPos
+							game.fishing(int(cardPos))
+						else:
+							print(">> Ocean empty, no fishing for you!")
 						game.checkEmptyHands()
+						game.checkFOK()
+
+						hand = game.getHand()
+						print(">> Your current hand:\n\t",hand,"\n")
+
 						game.updateTurn()
 					else:
 						# Player asked gave cards, turn does not change
+						print("\n>> Card(s) given! Your turn continues...")
 						game.checkEmptyHands()
+						game.checkFOK()
 
-					game.checkFOK()
+						hand = game.getHand()
+						print(">> Your current hand:\n\t",hand,"\n")
 
 					client.setGame(game)
 
 				
 				elif cmd == "exit":
+					game.updateTurn()
+					client.setGame(game)
 					client.leaveRoom()
 					print(">> Left room... disconnecting.")
 					client.disconnect()

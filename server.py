@@ -25,48 +25,82 @@ def main_loop(tcp_port, udp_port, rooms):
 	udp_server.start()
 	tcp_server.start()
 	is_running = True
-	print("="*50)
-	print("\t AVAILABLE COMMANDS")
-	print("="*50)
-	print("")
-	print("list : list rooms")
-	print("room <room_id> : print room information")
-	print("user <user_id> : print user information")
-	print("quit : quit server")
-	print("="*50)
-	print("")
+
+	print("\n\n||==================================================||")
+	print("\t\tAVAILABLE COMMANDS")
+	print("||==================================================||")
+	print("\n    [list] \t\t- list rooms")
+	print("    [clear] \t\t- drop all rooms")
+	print("    [roomstate <id>] \t- print room game state")
+	print("    [room <id>] \t- print room information")
+	print("    [user <id>] \t- print user information")
+	print("    [quit] \t\t- quit server")
+	print("    [help] \t\t- shows available commands")
+	print("||==================================================||\n\n")
 
 	while is_running:
 		cmd = input(">> Command: ")
 		
 		if cmd == "list":
-			print(">> Rooms:\n")
-			for room_id, room in rooms.rooms.items():
-				print(room.identifier," - ",room.name," (",len(room.players),"/",room.capacity,")",sep="")
+			rms = rooms.rooms.items()
+
+			if len(rms) == 0:
+				print(">> No active rooms.\n")
+			else:
+				print(">> Rooms:")
+				for room_id, room in rms:
+					print("\t- ",room.name," [",len(room.players),"/",room.capacity,"]",sep="")
+
+		elif cmd == "clear":
+			print(">> Dropping all rooms.\n")
+			rooms.rooms = {}
+			rooms.players = {}
+
+		elif cmd.startswith("roomstate "):
+			try:
+				id = cmd[10:]
+				room = rooms.rooms[id]
+				room.game.stateToString()
+				
+			except:
+				print("\n<!> Error while getting room game info.")
 				
 		elif cmd.startswith("room "):
 			try:
 				id = cmd[5:]
 				room = rooms.rooms[id]
-				print(room.identifier," - ",room.name," (",len(room.players),"/",room.capacity,")",sep="")
-				print(">> Players:\n")
+				print("\t- ",room.name," [",len(room.players),"/",room.capacity,"]",sep="")
+				print("\tPlayers:")
 				for player in room.players:
-					print(player.identifier)
+					print("\t- [ user ",player.identifier," ]",sep="")
 			except:
-				print("Error while getting room informations")
+				print("\n<!> Error while getting room informations.")
 				
 		elif cmd.startswith("user "):
 			try:
 				player = rooms.players[cmd[5:]]
 				print(player.identifier," : ",player.udp_addr[0],":",player.udp_addr[1])
 			except:
-				print("Error while getting user informations")
+				print("\n<!> Error while getting user informations.")
 				
 		elif cmd == "quit":
 			print(">> Shutting down server.")
 			udp_server.is_listening = False
 			tcp_server.is_listening = False
 			is_running = False
+
+		elif cmd == "help":
+			print("\n\n||==================================================||")
+			print("\t\tAVAILABLE COMMANDS")
+			print("||==================================================||")
+			print("\n    [list] \t\t- list rooms")
+			print("    [clear] \t\t- drop all rooms")
+			print("    [roomstate <id>] \t- print room game state")
+			print("    [room <id>] \t- print room information")
+			print("    [user <id>] \t- print user information")
+			print("    [quit] \t\t- quit server")
+			print("    [help] \t\t- shows available commands")
+			print("||==================================================||\n\n")
 
 	udp_server.join()
 	tcp_server.join()
@@ -137,13 +171,13 @@ class UdpServer(Thread):
 						self.lock.release()
 						
 				except RoomNotFound:
-					print("<!> Room not found")
+					print("<!> Room not found.")
 
 			except KeyError:
-				print("<!> Json from %s:%s is not valid" % address)
+				print("<!> Json from ",address," is not valid.")
 				
 			except ValueError:
-				print("<!> Message from %s:%s is not valid json string" % address)
+				print("<!> Message from ",address," is not valid json string.")
 
 		self.stop()
 		
@@ -220,12 +254,12 @@ class TcpServer(Thread):
 					self.lock.release()
 					
 			except KeyError:
-				print("<!> Json from %s:%s is not valid" % addr)
-				conn.send("<!> Json is not valid")
+				print("<!> Json from ",addr," is not valid.")
+				conn.send("<!> Json is not valid.")
 				
 			except ValueError:
-				print("<!> Message from %s:%s is not valid json string" % addr)
-				conn.send("<!> Message is not a valid json string")
+				print("<!> Message from ",addr," is not valid json string.")
+				conn.send("<!> Message is not a valid json string.")
 
 			conn.close()
 
@@ -239,7 +273,7 @@ class TcpServer(Thread):
 
 		if identifier is not None:
 			if identifier not in self.rooms.players.keys():
-				print("<!> Unknown identifier ",identifier," for ",addr[0],":",addr[1])
+				print("\n<!> Unknown identifier ",identifier," for ",addr[0],":",addr[1])
 				sock.send(self.msg % {"success": "False", "message": "Unknown identifier"})
 				return 0
 
@@ -265,7 +299,7 @@ class TcpServer(Thread):
 					gameData = self.rooms.get_game(payload)
 					client.send_tcp(True, gameData, sock)
 				except:
-					print("<!> Error getting game.")
+					print("\n<!> Error getting game.")
 
 			elif action == "set_game":
 				try:
@@ -274,7 +308,7 @@ class TcpServer(Thread):
 					self.rooms.set_game(payload,game)
 					client.send_tcp(True, payload, sock)
 				except:
-					print("<!> Error setting game.")
+					print("\n<!> Error setting game.")
 
 			elif action == "room_ready":
 				try:
@@ -283,7 +317,7 @@ class TcpServer(Thread):
 					is_ready = self.rooms.is_ready(payload)
 					client.send_tcp(True, is_ready, sock)
 				except:
-					print("<!> Error in checking if room ready.")
+					print("\n<!> Error in checking if room ready.")
 					
 			elif action == "autojoin":
 				room_id = self.rooms.join(identifier)

@@ -11,6 +11,7 @@ Integrantes:
 import uuid
 from player import Player
 from game import Game
+import json
 
 class Room:
 	def __init__(self, identifier, capacity, room_name):
@@ -63,20 +64,17 @@ class Room:
 	# Get Game
 	def get_game(self):
 		gameData = self.game.toJSON()
+		#print("---- get_game",gameData)
 		return gameData
 
 	# Set Game
-	def set_game(self, data):
+	def set_game(self, gameData):
 		try:
-			data = json.loads(data)
-			print(data) # TODO FIx SET GAME
-			if data['success'] == "True":
-				gameData = data['message']
-				self.game.adoptGameState(gameData['countPlayers'],gameData['hands'],gameData['ocean'],gameData['turn'])
-			else:
-				raise Exception(data['message'])
+			gameData = json.loads(gameData)
+			#print("---- set_game",gameData)
+			self.game.adoptGameState(gameData['countPlayers'],gameData['hands'],gameData['ocean'],gameData['turn'],gameData['points'])
 		except ValueError:
-			print(data)
+			print(gameData)
 
 	# Check if game is ready to start
 	def is_ready(self):
@@ -176,11 +174,11 @@ class Rooms:
 	# Send a message to a all the players in the room
 	def send(self, identifier, roomId, message, sock):
 		if roomId not in self.rooms:
-			print('Room not found')
+			print('<!> Room not found.')
 
 		room = self.rooms[roomId]
 		if not room.is_in_room(identifier):
-			print('Not in room')
+			print('<!> Not in room.')
 
 		for player in room.players:
 			if player.identifier != identifier:
@@ -189,11 +187,11 @@ class Rooms:
 	# Send a message only to one player in a room
 	def sendto(self, identifier, roomId, recipients, message, sock):
 		if roomId not in self.rooms:
-			print('Room not found')
+			print('<!> Room not found.')
 
 		room = self.rooms[roomId]
 		if not room.is_in_room(identifier):
-			print('Not in room')
+			print('<!> Not in room.')
    
 		if isinstance(recipients, str):
 			recipients = [recipients]
