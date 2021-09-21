@@ -177,6 +177,16 @@ class SocketThread(threading.Thread):
 	def stop(self):
 		self.sock.close()
 
+def isNumber(text):
+    isNum=False
+    while isNum==False:
+        value=input(text)
+        isNum=value.isnumeric()
+        if (isNum==False):
+            print ('<!> You must enter an int number ')
+        else:
+            value=int(value)
+    return value
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Simple game server')
@@ -217,6 +227,7 @@ if __name__ == "__main__":
 
 	# Defensive prog player list
 	player_id_list = []
+	print(connectedPlayers)
 	for i in range(connectedPlayers):
 		player_id_list.append(str(i+1))
 
@@ -292,10 +303,11 @@ if __name__ == "__main__":
 						print("\n>> Go fish!")
 						if len(game.ocean) > 0:
 							print(">> Pick an ocean card...")
-							cardPos = int(input(">> Ocean card position [1 to "+str(len(game.ocean))+"]: "))
-							while cardPos not in range(1,len(game.ocean)+1):
+							cardPos = isNumber(">> Ocean card position [1 to "+str(len(game.ocean))+"]: ")
+							while ((int(cardPos) not in range(1,len(game.ocean)+1))):
 								print("<!> Bad input.\n")
-								cardPos = int(input(">> Ocean card position [1 to "+str(len(game.ocean))+"]: "))
+								cardPos = isNumber(">> Ocean card position [1 to "+str(len(game.ocean))+"]: ")
+							cardPos =int(cardPos)
 							game.fishing(cardPos)
 						else:
 							print(">> Ocean empty, no fishing for you!")
