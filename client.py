@@ -20,7 +20,7 @@ from game import Game
 
 class Client:
 
-	def __init__(self,server_host,server_port_tcp=1234,server_port_udp=1234,client_port_udp=1235):
+	def __init__(self,server_host,server_port_tcp=1234,server_port_udp=1234,client_port_udp=1235, username='player'):
 		self.identifier = None
 		self.server_message = []
 		self.room_id = None
@@ -30,6 +30,7 @@ class Client:
 		self.server_listener.start()
 		self.server_udp = (server_host, server_port_udp)
 		self.server_tcp = (server_host, server_port_tcp)
+		self.username = username
 		self.register()
 
 	def createRoom(self, room_name=None):
@@ -190,8 +191,9 @@ if __name__ == "__main__":
 	client_port = int(args.tcp_port) + client_id
 
 	#  Register on server
-	client = Client("127.0.0.1",int(args.tcp_port),int(args.udp_port),client_port)
 	username = input(">> Enter your username: ")
+	client = Client("127.0.0.1",int(args.tcp_port),int(args.udp_port),client_port,username)
+	
 
 	try:
 		# Join client to available room
