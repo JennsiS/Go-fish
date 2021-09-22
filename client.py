@@ -209,6 +209,19 @@ if __name__ == "__main__":
 	# Setup id and client port
 	client_port = 2000 + random.randint(1,1000)
 
+	# Game Intro
+	print("\n\n====================================================")
+	print("\t   ____         _____ _     _     ")
+	print("\t  / ___| ___   |  ___(_)___| |__  ")
+	print("\t | |  _ / _ \\  | |_  | / __| '_ \\ ")
+	print("\t | |_| | (_) | |  _| | \\__ \\ | | |")
+	print("\t  \\____|\\___/  |_|   |_|___/_| |_|")
+	print("====================================================\n")
+
+	print("\t  a python implementation by JEL\n\n")
+
+	# Instructions
+
 	#  Register on server
 	username = input(">> Enter your username: ")
 	client = Client("127.0.0.1",int(args.tcp_port),int(args.udp_port),client_port,username)
