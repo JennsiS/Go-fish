@@ -200,10 +200,10 @@ class Game():
 		print("\tHands:")
 		cont = 1
 		for hand in self.hands:
-			print("\t  -",cont,":\n")
+			print("\t  -",cont,":")
 			showCards(hand)
 			cont += 1
-		print("\tOcean:\n")
+		print("\tOcean:")
 		showCards(self.ocean)
 
 		print("\tPoints:")

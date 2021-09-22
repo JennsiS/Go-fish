@@ -28,9 +28,9 @@ def showCards(listOfCards):
         x = x + "|"+(i[:-1]) + suit + "|"
         cont += 1
 
-    print("- "*((2*cont)+2))
+    print("- "*((2*cont)+1))
     print(x)
-    print("- "*((2*cont)+2))
+    print("- "*((2*cont)+1))
     
 #Function that allows verifying that an entered value is a whole number
 def isNumber(text):

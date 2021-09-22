@@ -213,19 +213,30 @@ if __name__ == "__main__":
 
 	print("\t  a python implementation by JEL\n\n")
 
-	# Instructions
-	print('\n****************************************************')
-	print('\t\t\t\tHOW TO PLAY\n')
-	print('Go fish is played with a French deck and can be played by 2+ players.')
-	print('\n>> Object of the Game: The goal is to win the most "books" of cards. \n A book is any four of a kind, such as four kings, four aces, and so on.')
-	print('\n>> Hands: If there are 2 players, 7 cards are dealt to each. \nIf there are 3 or more, 5 cards are dealt to each.')
-	print('\n>> Ocean: The cards that are not dealt to the players are placed \nin the middle of the board face down, this set is called the ocean')
-	print('\n>> The beggining: The game starts by selecting one of the players \nat random to start then the turns will be followed in the order in which the players entered the room.')
-	print('\n>> In your turn: You can ask any other player in the room \nif they have any cards with a certain number (You can only ask for cards with a number that are in your hand).\nIf the player you asked has one or more cards of that number, he must give them all to you and your turn continues.\nOtherwise, the player you asked tells you "Go fish" and you must take a card from the ocean choosing the position of the card you want and it is the next player´s turn.')
-	print('\n>> Points: You get points every time you collect a group of 4 cards with the same number.\n These cards are removed from your hand and from the game. ')
-	print('\n<!> If a player runs out of cards, they must take back the initial amount from the ocean if there are still available.\n If there are no more cards to take, the player has no more turns and must wait for the game to end.')
-	print('\n>> The End: The game ends when neither player has any cards in their hand and there are no more cards in the ocean.\n The player who has accumulated the most groups of 4 cards (the player with the maximum number of points) wins.')
-	print('\n****************************************************')
+	insConf = input(">> Would you like to read Go Fish Instructions? [y/n]: ")
+
+	if insConf.lower() == 'y':
+		# Instructions
+		print('\n|| ===================================================================== ||')
+		print('\t\t\t    HOW TO PLAY\n')
+		print('Go fish is played with a French deck and can be played by 2+ players.')
+		x = input("\t\t  == PRESS ENTER TO CONTINUE ==")
+		print('\n>> Object of the Game: The goal is to win the most "books" of cards. A book is any four of a kind, such as four kings, four aces, and so on.')
+		x = input("\t\t  == PRESS ENTER TO CONTINUE ==")
+		print('\n>> Hands: If there are 2 players, 7 cards are dealt to each. If there are 3 or more, 5 cards are dealt to each.')
+		x = input("\t\t  == PRESS ENTER TO CONTINUE ==")
+		print('\n>> Ocean: The cards that are not dealt to the players are placed in the middle of the board face down, this set is called the ocean')
+		x = input("\t\t  == PRESS ENTER TO CONTINUE ==")
+		print('\n>> The beggining: The game starts by selecting one of the players at random to start then the turns will be followed in the order in which the players entered the room.')
+		x = input("\t\t  == PRESS ENTER TO CONTINUE ==")
+		print('\n>> In your turn: You can ask any other player in the room if they have any cards with a certain number (You can only ask for cards with a number that are in your hand). If the player you asked has one or more cards of that number, he must give them all to you and your turn continues. Otherwise, the player you asked tells you "Go fish" and you must take a card from the ocean choosing the position of the card you want and it is the next player´s turn.')
+		x = input("\t\t  == PRESS ENTER TO CONTINUE ==")
+		print('\n>> Points: You get points every time you collect a group of 4 cards with the same number. These cards are removed from your hand and from the game. ')
+		x = input("\t\t  == PRESS ENTER TO CONTINUE ==")
+		print('\n<!> If a player runs out of cards, they must take back the initial amount from the ocean if there are still available. If there are no more cards to take, the player has no more turns and must wait for the game to end.')
+		x = input("\t\t  == PRESS ENTER TO CONTINUE ==")
+		print('\n>> The End: The game ends when neither player has any cards in their hand and there are no more cards in the ocean. The player who has accumulated the most groups of 4 cards (the player with the maximum number of points) wins.')
+		print('\n|| ===================================================================== ||')
 
 	#  Register on server
 	username = input("\n>> Enter your username to use in the game: ")
@@ -235,8 +246,9 @@ if __name__ == "__main__":
 	try:
 		# Join client to available room
 		client.autojoin()
-		print(">> Connected to [ room",client.room_id,"]\n\n")
-		print(">> [ roomstate",client.room_id,"]\n\n") # remove final version
+		print("\n>> Connected to room ",client.room_id)
+		print(">> [ roomstate",client.room_id,"]")
+		print(">> [ room",client.room_id,"]\n\n")
 	except Exception as e:
 		print("<!> Could not autojoin,",e)
 
@@ -293,7 +305,7 @@ if __name__ == "__main__":
 
 				elif cmd == "play":
 					hand = game.getHand()
-					print(">> Your current hand:\n\t")
+					print(">> Your current hand:")
 					showCards(hand)
 
 					to_id = input(">> Ask player "+str(player_id_list)+": ")
@@ -324,7 +336,7 @@ if __name__ == "__main__":
 						game.checkFOK()
 
 						hand = game.getHand()
-						print(">> Your current hand:\n\t")
+						print(">> Your current hand:")
 						showCards(hand)
 
 						game.updateTurn()
@@ -335,7 +347,7 @@ if __name__ == "__main__":
 						game.checkFOK()
 
 						hand = game.getHand()
-						print(">> Your current hand:\n\t")
+						print(">> Your current hand:")
 						showCards(hand)
 
 					client.setGame(game)
