@@ -22,12 +22,12 @@ Each client is assigned a free slot in a room, when room capacity is filled, gam
 
 ## Components  :open_file_folder:
 Component | Description |
-:---: | :---: |
+:---: | :--- |
 Server | Handles all rooms, client autojoins and overall comunication. |
 Client | Handles user info, autojoin requests and user game interaction. |
 Room | Handles room's game and room's players data. |
 Game | Go Fish implementation. Handles: deck, hands, current turn, ocean and rules. |
-Util | Module for util functions. |
+Utils | Module for util functions. |
 
 ## Authors  :pencil2:
 - *Luis Quezada* - [@Lfquezada](https://github.com/Lfquezada)
