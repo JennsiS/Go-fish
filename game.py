@@ -11,6 +11,7 @@ Integrantes:
 
 import random
 import json
+from utils import showCards
 
 class Game():
 
@@ -199,9 +200,11 @@ class Game():
 		print("\tHands:")
 		cont = 1
 		for hand in self.hands:
-			print("\t  -",cont,":",hand)
+			print("\t  -",cont,":\n")
+			showCards(hand)
 			cont += 1
-		print("\tOcean:",self.ocean)
+		print("\tOcean:\n")
+		showCards(self.ocean)
 
 		print("\tPoints:")
 		cont = 1

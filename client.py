@@ -15,9 +15,9 @@ import socket
 import argparse
 import time
 import sys
-from game import Game
 import random
-
+from game import Game
+from utils import  showCards,isNumber
 
 class Client:
 
@@ -190,16 +190,7 @@ class SocketThread(threading.Thread):
 	def stop(self):
 		self.sock.close()
 
-def isNumber(text):
-    isNum=False
-    while isNum==False:
-        value=input(text)
-        isNum=value.isnumeric()
-        if (isNum==False):
-            print ('<!> You must enter an int number ')
-        else:
-            value=int(value)
-    return value
+
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Simple game server')
@@ -223,9 +214,21 @@ if __name__ == "__main__":
 	print("\t  a python implementation by JEL\n\n")
 
 	# Instructions
+	print('\n****************************************************')
+	print('\t\t\t\tHOW TO PLAY\n')
+	print('Go fish is played with a French deck and can be played by 2+ players.')
+	print('\n>> Object of the Game: The goal is to win the most "books" of cards. \n A book is any four of a kind, such as four kings, four aces, and so on.')
+	print('\n>> Hands: If there are 2 players, 7 cards are dealt to each. \nIf there are 3 or more, 5 cards are dealt to each.')
+	print('\n>> Ocean: The cards that are not dealt to the players are placed \nin the middle of the board face down, this set is called the ocean')
+	print('\n>> The beggining: The game starts by selecting one of the players \nat random to start then the turns will be followed in the order in which the players entered the room.')
+	print('\n>> In your turn: You can ask any other player in the room \nif they have any cards with a certain number (You can only ask for cards with a number that are in your hand).\nIf the player you asked has one or more cards of that number, he must give them all to you and your turn continues.\nOtherwise, the player you asked tells you "Go fish" and you must take a card from the ocean choosing the position of the card you want and it is the next player´s turn.')
+	print('\n>> Points: You get points every time you collect a group of 4 cards with the same number.\n These cards are removed from your hand and from the game. ')
+	print('\n<!> If a player runs out of cards, they must take back the initial amount from the ocean if there are still available.\n If there are no more cards to take, the player has no more turns and must wait for the game to end.')
+	print('\n>> The End: The game ends when neither player has any cards in their hand and there are no more cards in the ocean.\n The player who has accumulated the most groups of 4 cards (the player with the maximum number of points) wins.')
+	print('\n****************************************************')
 
 	#  Register on server
-	username = input(">> Enter your username: ")
+	username = input("\n>> Enter your username to use in the game: ")
 	client = Client("127.0.0.1",int(args.tcp_port),int(args.udp_port),client_port,username)
 	
 
@@ -290,8 +293,8 @@ if __name__ == "__main__":
 
 				elif cmd == "play":
 					hand = game.getHand()
-					print(">> Your current hand:\n\t",hand,"\n")
-
+					print(">> Your current hand:\n\t")
+					showCards(hand)
 
 					to_id = input(">> Ask player "+str(player_id_list)+": ")
 					while to_id not in player_id_list:
@@ -321,7 +324,8 @@ if __name__ == "__main__":
 						game.checkFOK()
 
 						hand = game.getHand()
-						print(">> Your current hand:\n\t",hand,"\n")
+						print(">> Your current hand:\n\t")
+						showCards(hand)
 
 						game.updateTurn()
 					else:
@@ -331,7 +335,8 @@ if __name__ == "__main__":
 						game.checkFOK()
 
 						hand = game.getHand()
-						print(">> Your current hand:\n\t",hand,"\n")
+						print(">> Your current hand:\n\t")
+						showCards(hand)
 
 					client.setGame(game)
 
