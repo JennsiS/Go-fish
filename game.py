@@ -55,6 +55,7 @@ class Game():
 		if self.countPlayers > 2:
 			handRange = 5
 
+		self.points = []
 		for i in range(self.countPlayers):
 			hand = []
 			self.points.append(0)
