@@ -178,10 +178,12 @@ class SocketThread(threading.Thread):
 
 	def run(self):
 		while True:
-			data, addr = self.sock.recvfrom(1024)
-			self.lock.acquire()
 			try:
+				data, addr = self.sock.recvfrom(1024)
+				self.lock.acquire()
 				self.client.server_message.append(data)
+			except:
+				pass
 			finally:
 				self.lock.release()
 
