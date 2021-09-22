@@ -76,6 +76,12 @@ class Room:
 		except ValueError:
 			print(gameData)
 
+	def get_client_game_id(self,playerID):
+		playerIDS = []
+		for p in self.players:
+			playerIDS.append(p.identifier)
+		return playerIDS.index(playerID) + 1
+
 	# Check if game is ready to start
 	def is_ready(self):
 		if self.is_full and len(self.game.ocean) != 0:
@@ -139,6 +145,10 @@ class Rooms:
 	def set_game(self, roomId, gameData):
 		if roomId in self.rooms:
 			self.rooms[roomId].set_game(gameData)
+
+	def get_client_game_id(self,roomId,clientId):
+		if roomId in self.rooms:
+			return self.rooms[roomId].get_client_game_id(clientId)
 
 	# Check if room ready to start game
 	def is_ready(self,roomId):

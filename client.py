@@ -16,6 +16,7 @@ import argparse
 import time
 import sys
 from game import Game
+import random
 
 
 class Client:
@@ -72,6 +73,16 @@ class Client:
 		data = self.sock_tcp.recv(1024)
 		self.sock_tcp.close()
 		message = self.parseData(data)
+
+	def getClientGameId(self):
+		message = json.dumps({"action": "get_client_game_id", "payload": self.room_id, "identifier": self.identifier})
+		self.sock_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.sock_tcp.connect(self.server_tcp)
+		self.sock_tcp.send(message.encode())
+		data = self.sock_tcp.recv(1024)
+		self.sock_tcp.close()
+		client_game_id = self.parseData(data)
+		return client_game_id
 
 	def isRoomReady(self):
 		message = json.dumps({"action": "room_ready", "payload": self.room_id, "identifier": self.identifier})
@@ -192,13 +203,11 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Simple game server')
 	parser.add_argument('--tcpport',dest='tcp_port',help='Listening tcp port',default="1234")
 	parser.add_argument('--udpport',dest='udp_port',help='Listening udp port',default="1234")
-	parser.add_argument('--id',dest='client_id',help='Client game id',default="1")
 
 	args = parser.parse_args()
 
 	# Setup id and client port
-	client_id = int(args.client_id)
-	client_port = int(args.tcp_port) + client_id
+	client_port = 2000 + random.randint(1,1000)
 
 	#  Register on server
 	username = input(">> Enter your username: ")
@@ -225,9 +234,10 @@ if __name__ == "__main__":
 
 	print("\n>> Waiting for other players to start game... (",connectedPlayers,"/",maxPlayers,")\n",sep="")
 
+	client_id = client.getClientGameId()
+
 	# Defensive prog player list
 	player_id_list = []
-	print(connectedPlayers)
 	for i in range(connectedPlayers):
 		player_id_list.append(str(i+1))
 
@@ -235,25 +245,6 @@ if __name__ == "__main__":
 
 	# Init game
 	game = Game(connectedPlayers)
-
-	'''
-	Init Room Game
-	- When room is full it starts the game
-	
-	Room flow:
-	1. Create game: game = Game(connectedPlayers)
-	3. Get init turn: game.turn
-	4. Turn player asks another player for a type of card: game.askCard(client_id,to_id,card_number)
-	5. if False (Fish)
-		- cardPos = input(">> Ocean card position: ")
-		- game.fishing(cardPos)
-		- game.checkEmptyHands()
-		- game.updateTurn()
-	6. if True (Card given)
-		- game.checkEmptyHands()
-	7. game.checkFOK()
-	8. game.checkWin()
-	'''
 
 	#  Main GAME loop
 	print("\n>> Game starting!!!\n\n")
