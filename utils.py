@@ -45,3 +45,63 @@ def isNumber(text):
     return value
 
 
+#Function that shows the ocean graphically
+#if pos is none all cards are upside down
+#if pos is a position in the ocean it will reveal that card
+#Otherwise error message is shwon
+def show_ocean(ocean,pos):
+    x = ""
+    y = ""
+    cont = 0
+    if( pos == None):
+        for i in range (1, len(ocean)+1):
+            x = x+" - -"
+            y = y +"|"+ str(i) +"| "
+            cont +=1
+
+            if (cont == 6):
+                print(x)
+                print(y)
+                cont = 0
+                x = ""
+                y = ""
+        print(x)
+        print(y)
+            
+    elif( 0< pos <=len(ocean)):
+        for i in range (1, len(ocean)+1):
+            if(i == pos):
+                palo = ""
+                if (ocean[i-1][-1] == "C"):
+                    palo = "\u2663"
+            
+                elif (ocean[i-1][-1] == "S"):
+                    palo = "\u2660"
+
+                elif (ocean[i-1][-1] == "H"):
+                    palo = "\u2665"
+
+                elif (ocean[i-1][-1] == "D"):
+                    palo = "\u2666"
+                card = ocean[i-1][:-1]+palo
+                x = x+" - -"
+                y = y +"|"+ card +"| "
+                cont +=1
+
+            else:
+                x = x+" - -"
+                y = y +"|"+ str(i) +"| "
+                cont +=1
+
+            if (cont == 6):
+                print(x)
+                print(y)
+                cont = 0
+                x = ""
+                y = ""
+        print(x)
+        print(y)
+
+    else:
+        print("POSICION NO VALIDA INTENTE DENUEVO")
+
