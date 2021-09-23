@@ -279,6 +279,7 @@ if __name__ == "__main__":
 	#  Main GAME loop
 	print("\n>> Game starting!!!\n\n")
 	continueLoop = True
+	firstTime = True
 
 	while continueLoop:
 		msg = client.getMessages()
@@ -286,15 +287,25 @@ if __name__ == "__main__":
 			for message in msg:
 				message = json.loads(message)
 				sender, value = message.popitem()
-				print("[",value["name"],"]: ",value["message"],sep="")
+				if value["name"] == "___notification___":
+					print(value["message"])
+				else:
+					print("[",value["name"],"]: ",value["message"],sep="")
 
 		gameData = client.getGame()
 		gameData = json.loads(gameData)
 		game.adoptGameState(gameData['countPlayers'],gameData['hands'],gameData['ocean'],gameData['turn'],gameData['points'])
 
-		if game.checkWin() == False:
+		if firstTime:
+			firstTime = False
 			if game.turn == client_id:
 				print("\n>> Your turn!")
+			else:
+				print("\n>> Player ",game.turn,"'s' turn!\n",sep="")
+				print("\t ||------ Chat ------||")
+
+		if game.checkWin() == False:
+			if game.turn == client_id:
 				cmd = input("[chat/play/exit]: ")
 
 				while cmd not in ["chat","play","exit"]:
@@ -334,16 +345,16 @@ if __name__ == "__main__":
 						else:
 							print(">> Ocean empty, no fishing for you!")
 						game.checkEmptyHands()
-						
+
 						foksFound = game.checkFOK()
 						if foksFound == 1:
 							print(">> You made",foksFound,"group.")
-							msgtext = "made "+foksFound+" group!"
-							client.send({"name": username,"message": msgtext})
+							msgtext = ">> "+username+" made "+str(foksFound)+" group!"
+							client.send({"name": "___notification___","message": msgtext})
 						elif foksFound > 1:
 							print(">> You made",foksFound,"groups.")
-							msgtext = "made "+foksFound+" groups!"
-							client.send({"name": username,"message": msgtext})
+							msgtext = ">> "+username+" made "+str(foksFound)+" groups!"
+							client.send({"name": "___notification___","message": msgtext})
 
 						hand = game.getHand()
 						print(">> Your current hand:")
@@ -360,12 +371,12 @@ if __name__ == "__main__":
 						foksFound = game.checkFOK()
 						if foksFound == 1:
 							print(">> You made",foksFound,"group.")
-							msgtext = "made "+foksFound+" group!"
-							client.send({"name": username,"message": msgtext})
+							msgtext = ">> "+username+" made "+str(foksFound)+" group!"
+							client.send({"name": "___notification___","message": msgtext})
 						elif foksFound > 1:
 							print(">> You made",foksFound,"groups.")
-							msgtext = "made "+foksFound+" groups!"
-							client.send({"name": username,"message": msgtext})
+							msgtext = ">> "+username+" made "+str(foksFound)+" groups!"
+							client.send({"name": "___notification___","message": msgtext})
 
 						hand = game.getHand()
 						print(">> Your current hand:")
