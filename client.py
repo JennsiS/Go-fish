@@ -400,6 +400,10 @@ if __name__ == "__main__":
 				elif cmd == "exit":
 					game.updateTurn()
 					client.setGame(game)
+
+					msgtext = ">> [Player "+client_id+"] "+username+" left the room."
+					client.send({"name": "___notification___","message": msgtext})
+
 					client.leaveRoom()
 					print(">> Left room... disconnecting.")
 					client.disconnect()
