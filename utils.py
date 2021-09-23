@@ -9,10 +9,10 @@ Integrantes:
 - Esteban del Valle 18221
 '''
 # Function that allows cards to be displayed graphically
-def showCards(listOfCards):
+def showCards(cards):
     cont = 0
     x = ""
-    for i in listOfCards:
+    for i in cards:
         if (i[-1] == "C"):
             suit = "\u2663"
             
@@ -32,28 +32,28 @@ def showCards(listOfCards):
     print(x)
     print("- "*((2*cont)+1))
     
-#Function that allows verifying that an entered value is a whole number
+# Function that allows verifying that an entered value is a whole number
 def isNumber(text):
-    isNum=False
-    while isNum==False:
-        value=input(text)
-        isNum=value.isnumeric()
-        if (isNum==False):
+    isNum = False
+    while isNum == False:
+        value = input(text)
+        isNum = value.isnumeric()
+        if (isNum == False):
             print ('<!> You must enter an int number ')
         else:
-            value=int(value)
+            value = int(value)
     return value
 
 
-#Function that shows the ocean graphically
-#if pos is none all cards are upside down
-#if pos is a position in the ocean it will reveal that card
-#Otherwise error message is shwon
-def show_ocean(ocean,pos):
+# Function that shows the ocean graphically
+# if pos is none all cards are upside down
+# if pos is a position in the ocean it will reveal that card
+# Otherwise error message is shwon
+def showOcean(ocean,pos):
     x = ""
     y = ""
     cont = 0
-    if( pos == None):
+    if(pos == None):
         for i in range (1, len(ocean)+1):
             x = x+" - -"
             y = y +"|"+ str(i) +"| "
@@ -67,8 +67,9 @@ def show_ocean(ocean,pos):
                 y = ""
         print(x)
         print(y)
+        return True
             
-    elif( 0< pos <=len(ocean)):
+    elif(0 < pos <= len(ocean)):
         for i in range (1, len(ocean)+1):
             if(i == pos):
                 palo = ""
@@ -101,7 +102,8 @@ def show_ocean(ocean,pos):
                 y = ""
         print(x)
         print(y)
+        return True
 
     else:
-        print("POSICION NO VALIDA INTENTE DENUEVO")
+        return False
 

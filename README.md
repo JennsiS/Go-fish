@@ -10,7 +10,7 @@ Local `127.0.0.1`
 1. Download all python files.
 2. Start server
 ```
-python3 server.py --capacity [max capacity for rooms]
+python3 server.py -capacity [max capacity for rooms]
 ```
 Default server capacity (if not provided) is `3`.
 

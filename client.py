@@ -17,7 +17,7 @@ import time
 import sys
 import random
 from game import Game
-from utils import  showCards,isNumber
+from utils import *
 
 class Client:
 
@@ -194,8 +194,8 @@ class SocketThread(threading.Thread):
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Simple game server')
-	parser.add_argument('--tcpport',dest='tcp_port',help='Listening tcp port',default="1234")
-	parser.add_argument('--udpport',dest='udp_port',help='Listening udp port',default="1234")
+	parser.add_argument('-tcpport',dest='tcp_port',help='Listening tcp port',default="1234")
+	parser.add_argument('-udpport',dest='udp_port',help='Listening udp port',default="1234")
 
 	args = parser.parse_args()
 
@@ -240,9 +240,14 @@ if __name__ == "__main__":
 
 	#  Register on server
 	username = input("\n>> Enter your username to use in the game: ")
+
+	# Its a tag used for room notifications, make sure it wont be a username
+	while username == "___notification___":
+		print(">> That username is not valid.")
+		username = input("\n>> Enter your username to use in the game: ")
+
 	client = Client("127.0.0.1",int(args.tcp_port),int(args.udp_port),client_port,username)
 	
-
 	try:
 		# Join client to available room
 		client.autojoin()
@@ -264,6 +269,7 @@ if __name__ == "__main__":
 
 	print("\n>> Waiting for other players to start game... (",connectedPlayers,"/",maxPlayers,")\n",sep="")
 
+	# Get unique client game id 1...n
 	client_id = client.getClientGameId()
 
 	# Defensive prog player list
@@ -271,6 +277,7 @@ if __name__ == "__main__":
 	for i in range(connectedPlayers):
 		player_id_list.append(str(i+1))
 
+	# Remove self because you can not ask yourself for cards
 	player_id_list.remove(str(client_id))
 
 	# Init game
@@ -302,7 +309,7 @@ if __name__ == "__main__":
 				print("\n>> Your turn!")
 			else:
 				print("\n>> Player ",game.turn,"'s' turn!\n",sep="")
-				print("\t ||------ Chat ------||")
+				print("\t ||------ Chat ------||\n")
 
 		if game.checkWin() == False:
 			if game.turn == client_id:
@@ -317,7 +324,7 @@ if __name__ == "__main__":
 
 				elif cmd == "play":
 					hand = game.getHand()
-					print(">> Your current hand:")
+					print("\n>> Your current hand:")
 					showCards(hand)
 
 					to_id = input(">> Ask player "+str(player_id_list)+": ")
@@ -336,11 +343,16 @@ if __name__ == "__main__":
 						print("\n>> Go fish!")
 						if len(game.ocean) > 0:
 							print(">> Pick an ocean card...")
+
+							showOcean(game.ocean,None) # Show cards upside down
+
 							cardPos = isNumber(">> Ocean card position [1 to "+str(len(game.ocean))+"]: ")
 							while ((int(cardPos) not in range(1,len(game.ocean)+1))):
 								print("<!> Bad input.\n")
 								cardPos = isNumber(">> Ocean card position [1 to "+str(len(game.ocean))+"]: ")
-							cardPos =int(cardPos)
+
+							showOcean(game.ocean,cardPos) # Show cards upside down except picked card 
+
 							game.fishing(cardPos)
 						else:
 							print(">> Ocean empty, no fishing for you!")
@@ -357,12 +369,12 @@ if __name__ == "__main__":
 							client.send({"name": "___notification___","message": msgtext})
 
 						hand = game.getHand()
-						print(">> Your current hand:")
+						print("\n>> Your current hand:")
 						showCards(hand)
 
 						game.updateTurn()
 						print("\n>> Player ",game.turn,"'s' turn!\n",sep="")
-						print("\t ||------ Chat ------||")
+						print("\t ||------ Chat ------||\n")
 					else:
 						# Player asked gave cards, turn does not change
 						print("\n>> Card(s) given! Your turn continues...")
@@ -379,7 +391,7 @@ if __name__ == "__main__":
 							client.send({"name": "___notification___","message": msgtext})
 
 						hand = game.getHand()
-						print(">> Your current hand:")
+						print("\n>> Your current hand:")
 						showCards(hand)
 
 					client.setGame(game)
@@ -393,7 +405,6 @@ if __name__ == "__main__":
 					client.disconnect()
 					sys.exit()
 			else:
-				#foo = input("\t\t- PRESS ENTER to refresh -\n")
 				time.sleep(2)
 		else:
 			print("\n>> Thanks for playing!\n")
