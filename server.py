@@ -365,13 +365,13 @@ class TcpServer(Thread):
 
 if __name__ == "__main__":
 
-        # Set ports
+	# Set ports
 	parser = argparse.ArgumentParser(description='Simple game server')
 	parser.add_argument('-tcpport',dest='tcp_port',help='Listening tcp port',default="1234")
 	parser.add_argument('-udpport',dest='udp_port',help='Listening udp port',default="1234")
 	parser.add_argument('-capacity',dest='room_capacity',help='Max players per room',default="2")
 
-        # Create rooms and run game loop
+	# Create rooms and run game loop
 	args = parser.parse_args()
 	rooms = Rooms(int(args.room_capacity))
 	main_loop(args.tcp_port, args.udp_port, rooms)
