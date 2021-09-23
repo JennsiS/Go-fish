@@ -143,11 +143,13 @@ class Game():
 		my_dict = {i:groups.count(i) for i in groups}
 		toKeep = []
 
+		foksFound = 0
+
 		for key in my_dict.keys():
 			if my_dict[key] == 4:
 				fok = key
 				
-				print('>> Player',player,'has obtained a group!')
+				foksFound += 1
 				self.points[player-1] += 1
 
 				for card in hand:
@@ -156,6 +158,7 @@ class Game():
 
 		if len(toKeep) > 0:
 			self.hands[player-1] = toKeep
+		return foksFound
 
 	# Llamar cada turn
 	def checkWin(self):

@@ -320,11 +320,6 @@ class TcpServer(Thread):
 					print("\n<!> Error in checking if room ready.")
 
 			elif action == "get_client_game_id":
-				if payload not in self.rooms.rooms.keys():
-					raise RoomNotFound()
-				client_game_id = self.rooms.get_client_game_id(payload,identifier)
-				client.send_tcp(True, client_game_id, sock)
-				'''
 				try:
 					if payload not in self.rooms.rooms.keys():
 						raise RoomNotFound()
@@ -332,7 +327,6 @@ class TcpServer(Thread):
 					client.send_tcp(True, client_game_id, sock)
 				except:
 					print("\n<!> Error getting client game id.")
-				'''
 					
 			elif action == "autojoin":
 				room_id = self.rooms.join(identifier)

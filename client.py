@@ -294,6 +294,7 @@ if __name__ == "__main__":
 
 		if game.checkWin() == False:
 			if game.turn == client_id:
+				print("\n>> Your turn!")
 				cmd = input("[chat/play/exit]: ")
 
 				while cmd not in ["chat","play","exit"]:
@@ -333,18 +334,38 @@ if __name__ == "__main__":
 						else:
 							print(">> Ocean empty, no fishing for you!")
 						game.checkEmptyHands()
-						game.checkFOK()
+						
+						foksFound = game.checkFOK()
+						if foksFound == 1:
+							print(">> You made",foksFound,"group.")
+							msgtext = "made "+foksFound+" group!"
+							client.send({"name": username,"message": msgtext})
+						elif foksFound > 1:
+							print(">> You made",foksFound,"groups.")
+							msgtext = "made "+foksFound+" groups!"
+							client.send({"name": username,"message": msgtext})
 
 						hand = game.getHand()
 						print(">> Your current hand:")
 						showCards(hand)
 
 						game.updateTurn()
+						print("\n>> Player ",game.turn,"'s' turn!\n",sep="")
+						print("\t ||------ Chat ------||")
 					else:
 						# Player asked gave cards, turn does not change
 						print("\n>> Card(s) given! Your turn continues...")
 						game.checkEmptyHands()
-						game.checkFOK()
+
+						foksFound = game.checkFOK()
+						if foksFound == 1:
+							print(">> You made",foksFound,"group.")
+							msgtext = "made "+foksFound+" group!"
+							client.send({"name": username,"message": msgtext})
+						elif foksFound > 1:
+							print(">> You made",foksFound,"groups.")
+							msgtext = "made "+foksFound+" groups!"
+							client.send({"name": username,"message": msgtext})
 
 						hand = game.getHand()
 						print(">> Your current hand:")
