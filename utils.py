@@ -97,11 +97,12 @@ def showOcean(ocean,pos):
             if (cont == 6):
                 print(x)
                 print(y)
+                print(x)
                 cont = 0
                 x = ""
                 y = ""
-        print(x)
         print(y)
+        print(x)
         return True
 
     else:
