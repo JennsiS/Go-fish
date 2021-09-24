@@ -82,6 +82,12 @@ class Room:
 			playerIDS.append(p.identifier)
 		return playerIDS.index(playerID) + 1
 
+	def get_usernames(self):
+		playerUsernames = []
+		for p in self.players:
+			playerUsernames.append(p.username)
+		return playerUsernames
+
 	# Check if game is ready to start
 	def is_ready(self):
 		if self.is_full and len(self.game.ocean) != 0:
@@ -96,7 +102,7 @@ class Rooms:
 		self.room_capacity = capacity
 
 	# Register a new player
-	def register(self, addr, udp_port):
+	def register(self, addr, udp_port,username):
 		player = None
 		for registered_player in self.players.values():
 			if registered_player.addr == addr:
@@ -105,7 +111,7 @@ class Rooms:
 				break
 
 		if player is None:
-			player = Player(addr, udp_port)
+			player = Player(addr, udp_port,username)
 			self.players[player.identifier] = player
 
 		return player
@@ -149,6 +155,10 @@ class Rooms:
 	def get_client_game_id(self,roomId,clientId):
 		if roomId in self.rooms:
 			return self.rooms[roomId].get_client_game_id(clientId)
+
+	def get_usernames(self,roomId):
+		if roomId in self.rooms:
+			return self.rooms[roomId].get_usernames()
 
 	# Check if room ready to start game
 	def is_ready(self,roomId):

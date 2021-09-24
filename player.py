@@ -16,8 +16,9 @@ import socket
 
 class Player:
 
-    def __init__(self, addr, udp_port):
+    def __init__(self, addr, udp_port,username):
         self.identifier = str(uuid.uuid4())
+        self.username = username
         self.addr = addr
         self.udp_addr = (addr[0], int(udp_port))
 

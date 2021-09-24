@@ -84,6 +84,16 @@ class Client:
 		client_game_id = self.parseData(data)
 		return client_game_id
 
+	def getUsernames(self):
+		message = json.dumps({"action": "get_usernames", "payload": self.room_id, "identifier": self.identifier})
+		self.sock_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.sock_tcp.connect(self.server_tcp)
+		self.sock_tcp.send(message.encode())
+		data = self.sock_tcp.recv(1024)
+		self.sock_tcp.close()
+		room_usernames = self.parseData(data)
+		return room_usernames
+
 	def isRoomReady(self):
 		message = json.dumps({"action": "room_ready", "payload": self.room_id, "identifier": self.identifier})
 		self.sock_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -140,7 +150,7 @@ class Client:
 		sock.sendto(message.encode(), self.server_udp)
 
 	def register(self):
-		message = json.dumps({"action": "register","payload": self.client_udp[1]})
+		message = json.dumps({"action": "register","payload": self.client_udp[1],"username":self.username})
 		self.sock_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.sock_tcp.connect(self.server_tcp)
 		self.sock_tcp.send(message.encode())
@@ -272,13 +282,12 @@ if __name__ == "__main__":
 	# Get unique client game id 1...n
 	client_id = client.getClientGameId()
 
-	# Defensive prog player list
-	player_id_list = []
-	for i in range(connectedPlayers):
-		player_id_list.append(str(i+1))
+	# player usernames list
+	player_usernames = client.getUsernames()
+	player_all_usernames = client.getUsernames()
 
 	# Remove self because you can not ask yourself for cards
-	player_id_list.remove(str(client_id))
+	player_usernames.remove(client.username)
 
 	# Init game
 	game = Game(connectedPlayers)
@@ -308,7 +317,7 @@ if __name__ == "__main__":
 			if game.turn == client_id:
 				print("\n>> Your turn!")
 			else:
-				print("\n>> Player ",game.turn,"'s' turn!\n",sep="")
+				print("\n>> ",player_all_usernames[game.turn-1],"'s turn!\n",sep="")
 				print("\t ||------ Chat ------||\n")
 
 		if game.checkWin() == False:
@@ -327,18 +336,24 @@ if __name__ == "__main__":
 					print("\n>> Your current hand:")
 					showCards(hand)
 
-					to_id = input(">> Ask player "+str(player_id_list)+": ")
-					while to_id not in player_id_list:
+					to_username = input(">> Ask player "+str(player_usernames)+": ")
+
+					while to_username not in player_usernames:
 						print("<!> Bad input.\n")
-						to_id = input(">> Ask player "+str(player_id_list)+": ")
+						to_username = input(">> Ask player "+str(player_usernames)+": ")
+
 					validValues = game.getValidCardNumbers()
 					card_number = input(">> Card values to choose from "+ str(validValues)+": ")
 					card_number = card_number.upper()
+
 					while card_number not in validValues:
 						print("<!> Bad input.\n")
 						card_number = input(">> Card values to choose from "+ str(validValues)+": ")
 						card_number = card_number.upper()
-					if game.askCard(client_id,int(to_id),card_number) == False:
+
+					to_id = player_all_usernames.index(to_username)+1
+
+					if game.askCard(client_id,to_id,card_number) == False:
 						# Player asked does not have any cards to give, go fish!
 						print("\n>> Go fish!")
 						if len(game.ocean) > 0:
@@ -373,7 +388,7 @@ if __name__ == "__main__":
 						showCards(hand)
 
 						game.updateTurn()
-						print("\n>> Player ",game.turn,"'s' turn!\n",sep="")
+						print("\n>> ",player_all_usernames[game.turn-1],"'s' turn!\n",sep="")
 						print("\t ||------ Chat ------||\n")
 					else:
 						# Player asked gave cards, turn does not change
@@ -401,7 +416,7 @@ if __name__ == "__main__":
 					game.updateTurn()
 					client.setGame(game)
 
-					msgtext = ">> [Player "+client_id+"] "+username+" left the room."
+					msgtext = ">> [Player "+str(client_id)+"] "+username+" left the room."
 					client.send({"name": "___notification___","message": msgtext})
 
 					client.leaveRoom()
@@ -411,6 +426,19 @@ if __name__ == "__main__":
 			else:
 				time.sleep(2)
 		else:
+			winString = "\t"
+
+			if len(game.winners) == 1:
+				winString += player_all_usernames[game.winners[0]-1] + " has won the game!!!!"
+			else:
+				winString += "It's a tie! Winners: "
+				for w in game.winners:
+					winString += (player_all_usernames[w-1] + " | ")
+
+			print("\n\n====================================================")
+			print(winString)
+			print("====================================================\n")
+
 			print("\n>> Thanks for playing!\n")
 			client.leaveRoom()
 			client.disconnect()

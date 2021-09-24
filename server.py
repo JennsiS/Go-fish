@@ -72,7 +72,7 @@ def main_loop(tcp_port, udp_port, rooms):
 				print("\t- ",room.name," [",len(room.players),"/",room.capacity,"]",sep="")
 				print("\tPlayers:")
 				for player in room.players:
-					print("\t- [ user ",player.identifier," ]",sep="")
+					print("\t- [ user ",player.identifier," ] [ username ",player.username," ]",sep="")
 			except:
 				print("\n<!> Error while getting room informations.")
 				
@@ -245,11 +245,18 @@ class TcpServer(Thread):
 					game = data['game']
 				except KeyError:
 					pass
+
+				username = None
+
+				try:
+					username = data['username']
+				except KeyError:
+					pass
 				
 				self.lock.acquire()
 				
 				try:
-					self.route(conn,addr,action,payload,identifier,room_id,game)
+					self.route(conn,addr,action,payload,identifier,room_id,game,username)
 				finally:
 					self.lock.release()
 					
@@ -265,9 +272,9 @@ class TcpServer(Thread):
 
 		self.stop()
 
-	def route(self,sock,addr,action,payload,identifier=None,room_id=None,game=None):
+	def route(self,sock,addr,action,payload,identifier=None,room_id=None,game=None,username=None):
 		if action == "register":
-			client = self.rooms.register(addr, int(payload))
+			client = self.rooms.register(addr, int(payload),username)
 			client.send_tcp(True, client.identifier, sock)
 			return 0
 
@@ -325,6 +332,15 @@ class TcpServer(Thread):
 						raise RoomNotFound()
 					client_game_id = self.rooms.get_client_game_id(payload,identifier)
 					client.send_tcp(True, client_game_id, sock)
+				except:
+					print("\n<!> Error getting client game id.")
+
+			elif action == "get_usernames":
+				try:
+					if payload not in self.rooms.rooms.keys():
+						raise RoomNotFound()
+					room_usernames = self.rooms.get_usernames(payload)
+					client.send_tcp(True, room_usernames, sock)
 				except:
 					print("\n<!> Error getting client game id.")
 					

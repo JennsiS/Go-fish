@@ -21,6 +21,7 @@ class Game():
 	turn = 1
 	hands = []
 	points = []
+	winners = []
 
 	def __init__(self,countPlayers):
 		self.countPlayers = countPlayers
@@ -175,15 +176,8 @@ class Game():
 				for k in range(len(self.points)):
 					if (self.points[k] == maxPoints):
 						winners.append(k+1)
-				if (len(winners)>1):
-					print(">> It's a tie, players: ", winners)
-				else:
-					print(">> Player",winners[0],"has won!!!")
 
-				print(">> Final points:")
-				cont = 1
-				for p in self.points:
-					print("\t-",cont," Points:",p)
+				self.winners = winners
 				return True
 			else:
 				#continuar con el juego
